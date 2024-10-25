@@ -8,6 +8,7 @@ const BitField = require('bitfield').default;
 const prettyBytes = require('prettier-bytes');
 const { useLocation, useNavigate } = require('react-router-dom');
 const { AnimatePresence, motion } = require('framer-motion');
+const useCanvasRpcFrame = require('../hooks/useCanvasRpcFrame');
 
 const TorrentSummary = require('../lib/torrent-summary');
 const Playlist = require('../lib/playlist');
@@ -45,6 +46,10 @@ function Player({ state, currentTorrent }) {
     ? localSubtitles.tracks.every(track => track.infoHash === currentTorrent.infoHash)
     : false;
 
+  const animeData = currentTorrent.animeData
+  const animeImage = animeData?.coverImage?.extraLarge || animeData?.bannerImage
+
+  const rpcFrame = useCanvasRpcFrame({ imageUrl: animeImage });
 
   const handleMouseMove = () => {
     setIsMouseMoving(true);
@@ -67,15 +72,19 @@ function Player({ state, currentTorrent }) {
         details: animeName,
         state: episodeNumber ? `Episodio ${episodeNumber}` : '',
         assets: {
-          small_image: isPaused ? 'pause' : 'play'
+          small_image: isPaused ? 'pause' : 'play',
+          small_text: isPaused ? 'Pausado' : 'Reproduciendo',
+          large_image: rpcFrame,
         },
       });
     }
 
-    if (currentTorrent && subtitlesFound && isTorrentReady) {
+    console.log('updateDiscordRPC', { currentTorrent, state: state.playing.isPaused, isTorrentReady, rpcFrame })
+
+    if (currentTorrent && isTorrentReady && rpcFrame) {
       updateDiscordRPC()
     }
-  }, [currentTorrent, state.playing.isPaused, subtitlesFound, isTorrentReady]);
+  }, [currentTorrent, state.playing.isPaused, isTorrentReady, rpcFrame]);
 
   useEffect(() => {
     return () => {

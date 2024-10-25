@@ -285,8 +285,8 @@ const dispatchHandlers = {
   resumePausedTorrents: () => controllers.torrentList().resumePausedTorrents(),
 
   // Playback
-  playFile: (infoHash, index) =>
-    controllers.playback().playFile(infoHash, index),
+  playFile: (playQuery, index) =>
+    controllers.playback().playFile(playQuery, index),
   playPause: () => controllers.playback().playPause(),
   nextTrack: () => controllers.playback().nextTrack(),
   previousTrack: () => controllers.playback().previousTrack(),

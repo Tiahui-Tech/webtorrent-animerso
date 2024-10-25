@@ -260,12 +260,12 @@ const Header = ({ state }) => {
                 ) : (
                   <>
                     <img
-                      src={discordUser.assets.avatarURL}
-                      alt={discordUser.basicInfo.globalName}
+                      src={discordUser?.assets?.avatarURL}
+                      alt={discordUser?.basicInfo?.globalName}
                       className="w-8 h-8 rounded-full"
                     />
                     <span className="text-white font-medium text-sm">
-                      {discordUser.basicInfo.globalName}
+                      {discordUser?.basicInfo?.globalName || '???'}
                     </span>
                   </>
                 )}

@@ -1,7 +1,7 @@
 const { useEffect, useState } = require('react');
 const { API_BASE_URL } = require('../../constants/config');
 
-const useAnimesData = ({ page = 1, perPage = 24, displayCount } = {}) => {
+const useAnimesData = ({ page = 1, perPage = 28, displayCount } = {}) => {
   const [animes, setAnimes] = useState(null);
 
   useEffect(() => {

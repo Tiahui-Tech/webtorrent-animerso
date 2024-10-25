@@ -17,7 +17,7 @@ const AnimeRecommendationsList = React.memo(({ idAnilist, sectionTitle }) => {
 
       <Divider orientation="horizontal" />
 
-      <div className="flex flex-col gap-6 p-6 bg-zinc-950 rounded-xl border-2 border-zinc-900">
+      <div className="flex flex-col gap-6 p-6 mt-4 bg-zinc-950 rounded-xl border-2 border-zinc-900">
         {recommendations ? (recommendations.map((anime, i) => (
           <AnimeCard
             anime={anime}
@@ -25,7 +25,9 @@ const AnimeRecommendationsList = React.memo(({ idAnilist, sectionTitle }) => {
             key={`anim-recomm-${idAnilist}-${i}`}
           />
         ))) : (
-          <AnimeCardSkeleton />
+          Array.from({ length: 8 }).map((_, index) => (
+            <AnimeCardSkeleton key={`skeleton-${index}`} />
+          ))
         )}
       </div>
     </div>

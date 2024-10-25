@@ -3,7 +3,7 @@ const { Card, CardHeader, CardBody, Skeleton } = require('@nextui-org/react');
 
 const AnimeCardSkeleton = () => {
   return (
-    <Card className="w-64">
+    <Card className="w-[208px] h-[340px]">
       <CardBody className="p-0 relative">
         <Skeleton className="w-full rounded-t-lg">
           <div className="aspect-[9/14] rounded-t-lg bg-default-300"></div>

@@ -27,6 +27,8 @@ const menu = require('../menu')
 const discordClientId = '1297080240736309348'
 let rpc
 
+const initialTimestamp = new Date().getTime()
+
 function init(state, options) {
   if (main.win) {
     return main.win.show()
@@ -290,31 +292,36 @@ function loginRPC() {
 }
 
 function updateDiscordRPC(params = {}) {
-  debounce(setDiscordRPC, 3500)(params)
+  debounce(setDiscordRPC, 1500)(params)
 }
 
 function setDiscordRPC(params = {}) {
   if (!rpc) return
 
-  const activityData = Object.entries(params).reduce((acc, [key, value]) => {
-    if (value != null && value !== '') {
-      acc[key] = value;
-    }
-    return acc;
-  }, {});
-
-  activityData.instance = true;
-  activityData.type = 3
-  activityData.buttons = [
-    {
-      label: 'Descarga la app',
-      url: 'https://www.animeton.com/'
+  const defaultActivityData = {
+    instance: true,
+    type: 3,
+    timestamps: {
+      start: initialTimestamp
     },
-    {
-      label: 'Nuestro Discord',
-      url: 'https://discord.gg/fYNNmKJJfk'
+    buttons: [
+      {
+        label: 'Descarga la App',
+        url: 'https://www.animeton.com/'
+      }
+    ],
+    assets: {
+      large_image: 'animeton'
     }
-  ]
+  };
+
+  const activityData = {
+    ...defaultActivityData,
+    ...params,
+    timestamps: { ...defaultActivityData.timestamps, ...params.timestamps },
+    buttons: params.buttons || defaultActivityData.buttons,
+    assets: { ...defaultActivityData.assets, ...params.assets }
+  };
 
   rpc.request('SET_ACTIVITY', { activity: activityData, pid: process.pid })
 }

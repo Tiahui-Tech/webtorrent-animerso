@@ -23,9 +23,7 @@ const AnimeSection = ({ state, sectionTitle, searchTerm, fullScreen }) => {
         setFilteredAnimes(animes || []);
       } else {
         const searchResults = await searchAnimes();
-        setFilteredAnimes(searchResults.filter((anime) =>
-          anime.title.romaji.toLowerCase().includes(searchTerm.toLowerCase())
-        ));
+        setFilteredAnimes(searchResults);
       }
       setIsLoading(false);
     };
@@ -36,7 +34,7 @@ const AnimeSection = ({ state, sectionTitle, searchTerm, fullScreen }) => {
   const isEmpty = !filteredAnimes.length;
 
   return (
-    <div className={`flex flex-col p-8 ${isEmpty ? 'justify-center' : 'justify-start'} items-center bg-zinc-960 ${fullScreen ? 'min-h-[calc(100vh-56px)]' : ''}`}>
+    <div className={`flex flex-col p-8 px-12 ${isEmpty ? 'justify-center' : 'justify-start'} items-center bg-zinc-960 ${fullScreen ? 'min-h-[calc(100vh-56px)]' : ''}`}>
       {sectionTitle && (
         <div className="relative flex flex-row justify-center items-center w-full mb-4">
           <h2 className="relative text-2xl font-bold z-10">
@@ -45,7 +43,7 @@ const AnimeSection = ({ state, sectionTitle, searchTerm, fullScreen }) => {
         </div>
       )}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 auto-rows-max gap-4 sm:gap-6 md:gap-8 justify-center items-center min-h-[400px]">
+        <div className="grid grid-cols-auto-fit gap-4 sm:gap-6 md:gap-8 justify-center items-center min-h-[400px] w-full">
           {Array.from({ length: 12 }).map((_, index) => (
             <AnimeCardSkeleton key={`skeleton-${index}`} />
           ))}
@@ -56,7 +54,7 @@ const AnimeSection = ({ state, sectionTitle, searchTerm, fullScreen }) => {
           <p className="text-2xl font-bold text-zinc-500">No se encontraron animes</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 auto-rows-max gap-4 sm:gap-6 md:gap-8 justify-center items-center min-h-[400px]">
+        <div className="grid grid-cols-auto-fit gap-4 sm:gap-6 md:gap-8 justify-center items-center min-h-[400px] w-full">
           {filteredAnimes.map((anime, i) => (
             <AnimeCard
               key={`anime-${anime.id}-${i}`}

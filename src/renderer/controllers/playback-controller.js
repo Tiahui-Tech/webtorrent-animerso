@@ -27,13 +27,13 @@ module.exports = class PlaybackController {
   // * Start torrenting, if necessary
   // * Stream, if not already fully downloaded
   // * If no file index is provided, restore the most recently viewed file or autoplay the first
-  playFile(infoHash, index = 0 /* optional */) {
+  playFile({ infoHash, animeData }, index = 0 /* optional */) {
     this.pauseActiveTorrents(infoHash)
 
     const currentPath = getCurrentPath();
 
     const torrentSummary = TorrentSummary.getByKey(this.state, infoHash)
-    eventBus.emit('torrentUpdate', torrentSummary)
+    eventBus.emit('torrentUpdate', { ...torrentSummary, animeData })
 
     if (currentPath === '/player') {
       this.updatePlayer(infoHash, index, false, (err) => {

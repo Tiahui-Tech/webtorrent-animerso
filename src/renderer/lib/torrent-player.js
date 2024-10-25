@@ -64,6 +64,8 @@ function playTorrent(anime, state, setIsLoading) {
     );
     const torrentUrl = torrentData?.torrentUrl || torrentData?.magnetUrl || torrentData?.link;
 
+    const playQuery = { infoHash: hash, animeData: anime };
+
     if (!torrentUrl || !hash) {
       throw new Error('Episodio no disponible.');
     }
@@ -73,7 +75,7 @@ function playTorrent(anime, state, setIsLoading) {
 
       // Wait 5 seconds to avoid errors and allow backend to prepare the torrent
       setTimeout(() => {
-        dispatch('playFile', hash);
+        dispatch('playFile', playQuery);
         setIsLoading(null);
       }, 5000);
 
@@ -85,7 +87,7 @@ function playTorrent(anime, state, setIsLoading) {
 
     if (isTorrentPlayable) {
       dispatch('toggleSelectTorrent', torrent.infoHash);
-      dispatch('playFile', hash);
+      dispatch('playFile', playQuery);
 
       setIsLoading(null);
     } else {
@@ -97,7 +99,7 @@ function playTorrent(anime, state, setIsLoading) {
         if (updatedTorrent && updatedTorrent.files.some(isPlayable)) {
           clearInterval(checkPlayableInterval);
           dispatch('toggleSelectTorrent', updatedTorrent.infoHash);
-          dispatch('playFile', hash);
+          dispatch('playFile', playQuery);
           setIsLoading(null);
         }
       }, 1000);

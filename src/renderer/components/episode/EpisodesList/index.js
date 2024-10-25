@@ -44,7 +44,7 @@ const AnimeEpisodesList = ({ idAnilist, animeColors, sectionTitle }) => {
   const isEpisodesDataEmpty = filteredAndSortedEpisodes.length === 0;
 
   return (
-    <div className="flex flex-col gap-2 justify-start w-full z-30">
+    <div className="flex flex-col gap-2 justify-start w-full z-30 overflow-hidden">
       <div className="flex flex-row w-full justify-between items-start">
         <h2 className="text-2xl font-semibold mt-2">{sectionTitle}</h2>
         <div className="flex flex-row gap-2">
@@ -82,23 +82,25 @@ const AnimeEpisodesList = ({ idAnilist, animeColors, sectionTitle }) => {
 
       <Divider orientation="horizontal" />
 
-      {isEpisodesDataEmpty && !isLoading ? (
-        <motion.div
-          className="flex flex-col justify-center items-center w-full min-h-[400px]"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <Icon icon="gravity-ui:circle-xmark" width="128" height="128" style={{ color: '#d1d5db ' }} />
-          <p className="text-2xl font-bold text-gray-300">No se encontraron episodios</p>
-        </motion.div>
-      ) : (
-        <EpisodesList
-          episodesData={filteredAndSortedEpisodes}
-          isLoading={isLoading}
-          animeColors={animeColors}
-        />
-      )}
+      <div>
+        {isEpisodesDataEmpty && !isLoading ? (
+          <motion.div
+            className="flex flex-col justify-center items-center w-full min-h-[400px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <Icon icon="gravity-ui:circle-xmark" width="128" height="128" style={{ color: '#d1d5db ' }} />
+            <p className="text-2xl font-bold text-gray-300">No se encontraron episodios</p>
+          </motion.div>
+        ) : (
+          <EpisodesList
+            episodesData={filteredAndSortedEpisodes}
+            isLoading={isLoading}
+            animeColors={animeColors}
+          />
+        )}
+      </div>
     </div>
   );
 };

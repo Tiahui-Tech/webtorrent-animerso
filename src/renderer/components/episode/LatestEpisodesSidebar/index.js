@@ -39,9 +39,9 @@ const LatestEpisodesSidebar = memo(({ state, bannerColors, sectionTitle }) => {
   };
 
   return (
-    <div className="flex flex-col p-4 gap-2 items-start z-30">
-      <h2 className="text-xl font-semibold">{sectionTitle}</h2>
-      <div className="flex flex-col gap-4 p-6 bg-zinc-950 rounded-xl border-2 border-zinc-900">
+    <div className="flex flex-col p-4 gap-2 items-start w-80 overflow-hidden">
+      <h2 className="text-xl font-semibold truncate w-full">{sectionTitle}</h2>
+      <div className="flex flex-col gap-4 p-6 bg-zinc-950 rounded-xl border-2 border-zinc-900 w-full overflow-hidden">
         {isLoading
           // While loading, shows 8 EpisodeSkeletons per row
           ? Array.from({ length: 8 }).map((_, i) => (

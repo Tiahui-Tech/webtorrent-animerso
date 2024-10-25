@@ -5,6 +5,7 @@ const { dispatch } = require('../../lib/dispatcher');
 
 const useExtractColor = require('../../hooks/useExtractColor');
 const useModernBackground = require('../../hooks/useModernBackground');
+const useCanvasRpcFrame = require('../../hooks/useCanvasRpcFrame');
 const useAnimeDetails = require('../../hooks/useAnimeDetails');
 
 const AnimeOverview = require('../../components/anime/AnimeOverview');
@@ -18,22 +19,26 @@ const AnimeDetails = ({ state }) => {
   const [showSidebar, setShowSidebar] = useState(window.innerWidth >= 1500);
 
   const { idAnilist } = useParams();
-  const location = useLocation();
-  const animeTitle = location.state?.title || 'Información del Anime';
 
   const anime = useAnimeDetails(idAnilist);
 
   const animeImage = anime?.coverImage?.extraLarge || anime?.bannerImage;
   const bannerImage = anime?.bannerImage || anime?.coverImage?.extraLarge;
 
+  const rpcFrame = useCanvasRpcFrame({ imageUrl: animeImage });
+
   useEffect(() => {
-    state.window.title = animeTitle;
-    dispatch('updateDiscordRPC', {
-      state: 'Viendo detalles',
-      details: animeTitle,
-      assets: { large_text: animeTitle, large_image: animeImage }
-    });
-  }, [state.window, animeTitle]);
+    if (rpcFrame && anime) {
+      const animeTitle = anime?.title?.romaji
+
+      state.window.title = animeTitle;
+      dispatch('updateDiscordRPC', {
+        state: 'Viendo detalles',
+        details: animeTitle,
+        assets: { large_image: rpcFrame, small_image: 'animeton' }
+      });
+    }
+  }, [state.window, anime, rpcFrame]);
 
   const { animeColors, textColor } = useExtractColor(animeImage);
   const { animeColors: bannerColors } = useExtractColor(bannerImage);
@@ -69,8 +74,8 @@ const AnimeDetails = ({ state }) => {
   }
 
   return (
-    <div className="flex flex-row bg-black justify-between items-start">
-      <div className="relative w-full">
+    <div className="flex flex-row bg-black justify-between items-start overflow-hidden">
+      <div className="relative w-full overflow-hidden">
         <AnimeOverview
           anime={anime}
           animeColors={animeColors}
@@ -91,11 +96,13 @@ const AnimeDetails = ({ state }) => {
       </div>
 
       {showSidebar && (
-        <LatestEpisodesSidebar
-          state={state}
-          bannerColors={bannerColors}
-          sectionTitle="Episodios Recientes"
-        />
+        <div className="flex-shrink-0 z-50">
+          <LatestEpisodesSidebar
+            state={state}
+            bannerColors={bannerColors}
+            sectionTitle="Episodios Recientes"
+          />
+        </div>
       )}
     </div>
   );
