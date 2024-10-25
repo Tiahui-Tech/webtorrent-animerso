@@ -1,4 +1,5 @@
 const { useState, useEffect } = require('react');
+const { API_BASE_URL } = require('../../constants/config');
 
 const useDiscordUser = (discordId) => {
   const [data, setData] = useState(null);
@@ -10,14 +11,14 @@ const useDiscordUser = (discordId) => {
       setError(null);
 
       try {
-        const response = await fetch(`https://api.asure.dev/v1/user/${discordId}`);
+        const response = await fetch(`${API_BASE_URL}/user/discord/${discordId}`);
         const result = await response.json();
 
         if (result.error) {
           return setError(result.message);
         }
 
-        setData(result.data);
+        setData(result);
       } catch (err) {
         console.error('Error fetching Discord user:', err);
         setError(err.message || 'Ocurrió un error al obtener el usuario de Discord');
@@ -28,6 +29,9 @@ const useDiscordUser = (discordId) => {
 
     if (discordId) {
       fetchDiscordUser();
+      const interval = setInterval(fetchDiscordUser, 60000);
+      
+      return () => clearInterval(interval);
     }
   }, [discordId]);
 

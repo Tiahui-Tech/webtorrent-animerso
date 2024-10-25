@@ -14,7 +14,7 @@ const useDiscordUser = require('../../hooks/useDiscordUser');
 
 const SearchInput = require('./search-input');
 const { Icon } = require('@iconify/react');
-const { Skeleton } = require('@nextui-org/react');
+const { Skeleton, Divider, Tooltip } = require('@nextui-org/react');
 
 const Header = ({ state }) => {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ const Header = ({ state }) => {
   const appUserDiscordId = state?.saved?.activation?.discordId
   const appIsBlocked = state?.saved?.activation?.blocked
 
-  const { data: discordUser, isLoading: isLoadingDiscordUser, error: errorDiscordUser } = useDiscordUser(appUserDiscordId);
+  const { data: userData, isLoading: isLoadingUserData } = useDiscordUser(appUserDiscordId);
 
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
@@ -247,8 +247,10 @@ const Header = ({ state }) => {
 
             {/* Discord User */}
             {(appIsActivated && appUserDiscordId && !appIsBlocked) && (
-              <div className="flex flex-row items-center gap-2 bg-zinc-900 rounded-full pl-1 pr-3 py-1">
-                {isLoadingDiscordUser ? (
+              <div className="flex flex-row items-center gap-2 bg-zinc-900 rounded-full pl-1 pr-3 py-1" style={{
+                zIndex: 9999, pointerEvents: 'auto', WebkitAppRegion: 'no-drag'
+              }}>
+                {isLoadingUserData ? (
                   <>
                     <Skeleton className="rounded-full" style={{ backgroundColor: '#ffffff30' }}>
                       <div className="w-8 h-8 rounded-full bg-default-200"></div>
@@ -259,13 +261,22 @@ const Header = ({ state }) => {
                   </>
                 ) : (
                   <>
+                    <Tooltip content="¡Consigue mas interactuando en discord!" className='bg-zinc-900 text-white' placement='bottom'>
+                      <div className="flex flex-row items-center gap-1">
+                        <img src={'assets/icons/coin.png'} alt="coin" className="w-4 h-4 ml-2" />
+                        <span className="text-white font-medium text-sm">
+                          {userData?.user?.coins || 0}
+                        </span>
+                      </div>
+                    </Tooltip>
+                    <Divider orientation="vertical" className="h-8" />
                     <img
-                      src={discordUser?.assets?.avatarURL}
-                      alt={discordUser?.basicInfo?.globalName}
+                      src={userData?.discord?.avatarURL}
+                      alt={userData?.discord?.username}
                       className="w-8 h-8 rounded-full"
                     />
                     <span className="text-white font-medium text-sm">
-                      {discordUser?.basicInfo?.globalName || '???'}
+                      {userData?.discord?.username || '???'}
                     </span>
                   </>
                 )}
