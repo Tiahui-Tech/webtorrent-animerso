@@ -281,6 +281,10 @@ module.exports = class PlaybackController {
     const state = this.state
     const torrentSummary = TorrentSummary.getByKey(state, infoHash)
 
+    if (!torrentSummary || !torrentSummary.infoHash) {
+      return cb(new UnplayableFileError());
+    }
+
     state.playing.infoHash = infoHash;
     state.playing.isReady = false;
 

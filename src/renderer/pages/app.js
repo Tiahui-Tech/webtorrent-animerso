@@ -95,11 +95,6 @@ function AppContent({ initialState, onUpdate }) {
     };
     eventBus.on('torrentUpdate', torrentUpdateHandler);
 
-    return () => {
-      eventBus.off('navigate', navigationHandler);
-      eventBus.off('stateUpdate', stateUpdateHandler);
-      eventBus.off('torrentUpdate', torrentUpdateHandler);
-    };
   }, [navigate, location]);
 
   useEffect(() => {
@@ -125,7 +120,7 @@ function AppContent({ initialState, onUpdate }) {
         className={`dark text-foreground bg-background min-h-screen overflow-y-auto ${cls.join(' ')}`}
       >
         <Header state={state} />
-        <ErrorPopover state={state} />
+        <ErrorPopover state={state}/>
         <div
           key="content"
           className="content"
@@ -159,7 +154,7 @@ function AppContent({ initialState, onUpdate }) {
   );
 }
 
-function ErrorPopover({ state }) {
+function ErrorPopover({ state}) {
   const now = new Date().getTime();
   const recentErrors = state.errors.filter((x) => now - x.time < 5000);
   const hasErrors = recentErrors.length > 0;
