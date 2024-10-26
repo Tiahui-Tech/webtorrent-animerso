@@ -29,6 +29,7 @@ const Header = ({ state }) => {
 
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
+  const [canGoHome, setCanGoHome] = useState(false);
   const [isHome, setIsHome] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const [opacity, setOpacity] = useState(1);
@@ -67,6 +68,11 @@ const Header = ({ state }) => {
     // Debug logging
     console.log('History updated:', JSON.stringify(historyRef.current, null, 2));
   }, [location]);
+
+  useEffect(() => {
+    const currentPath = location.pathname;
+    setCanGoHome(currentPath !== '/' || searchTerm);
+  }, [location, searchTerm]);
 
   useEffect(() => {
     const updateMaximizedState = () => {
@@ -145,12 +151,19 @@ const Header = ({ state }) => {
   }, [navigate]);
 
   const handleHome = useCallback(() => {
-    if (!isHome) {
-      navigate('/');
+    if (!canGoHome) return;
+
+    const resetSearch = () => {
       setDebouncedSearchTerm('');
       setSearchTerm('');
+    };
+
+    if (!isHome) {
+      navigate('/');
     }
-  }, [isHome, navigate, setDebouncedSearchTerm, setSearchTerm]);
+
+    resetSearch();
+  }, [canGoHome, isHome, navigate, setDebouncedSearchTerm, setSearchTerm]);
 
   const startDrag = (e) => {
     if (e.button !== 0) return;
@@ -234,7 +247,7 @@ const Header = ({ state }) => {
 
           {/* Animeton Logo */}
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <button onClick={handleHome} className={isHome ? 'cursor-default' : 'cursor-pointer'} style={{ WebkitAppRegion: 'no-drag', zIndex: 9999 }}>
+            <button onClick={handleHome} className={canGoHome ? 'cursor-pointer' : 'cursor-default'} style={{ WebkitAppRegion: 'no-drag', zIndex: 9999 }}>
               <div className="flex flex-col items-center">
                 <p className="text-white font-bold text-2xl leading-none">Animeton</p>
                 <span className="text-zinc-400 text-xs mt-1 leading-none">Beta cerrada</span>
