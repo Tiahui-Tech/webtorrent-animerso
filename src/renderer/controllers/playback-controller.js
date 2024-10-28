@@ -281,6 +281,10 @@ module.exports = class PlaybackController {
     const state = this.state
     const torrentSummary = TorrentSummary.getByKey(state, infoHash)
 
+    if (!torrentSummary || !torrentSummary.infoHash) {
+      return cb(new UnplayableFileError());
+    }
+
     state.playing.infoHash = infoHash;
     state.playing.isReady = false;
 
@@ -323,7 +327,11 @@ module.exports = class PlaybackController {
     const state = this.state
 
     const torrentSummary = TorrentSummary.getByKey(state, infoHash)
-    const fileSummary = torrentSummary.files.at(index)
+    const fileSummary = torrentSummary?.files?.at(index)
+
+    if (!fileSummary) {
+      return cb(new UnplayableFileError())
+    }
 
     if (!TorrentPlayer.isPlayable(fileSummary)) {
       torrentSummary.mostRecentFileIndex = undefined

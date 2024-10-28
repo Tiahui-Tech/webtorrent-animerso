@@ -16,7 +16,7 @@ const AnimeCarousel = ({ animes }) => {
     useEffect(() => {
         const interval = setInterval(() => {
             handleNext(false);
-        }, isUserInteraction ? 10000 : 5000);
+        }, isUserInteraction ? 15000 : 10000);
 
         return () => clearInterval(interval);
     }, [currentIndex, isUserInteraction]);

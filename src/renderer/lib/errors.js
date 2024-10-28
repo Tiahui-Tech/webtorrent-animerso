@@ -10,23 +10,23 @@ class TorrentError extends ExtendableError { }
 /* Playback */
 
 class UnplayableTorrentError extends PlaybackError {
-  constructor() { super('Can\'t play any files in torrent') }
+  constructor() { super('No se pudo reproducir ningún archivo en el torrent') }
 }
 
 class UnplayableFileError extends PlaybackError {
-  constructor() { super('Can\'t play that file') }
+  constructor() { super('No se pudo reproducir el episodio') }
 }
 
 /* Sound */
 
 class InvalidSoundNameError extends SoundError {
-  constructor(name) { super(`Invalid sound name: ${name}`) }
+  constructor(name) { super(`Nombre de sonido inválido: ${name}`) }
 }
 
 /* Torrent */
 
 class TorrentKeyNotFoundError extends TorrentError {
-  constructor(torrentKey) { super(`Can't resolve torrent key ${torrentKey}`) }
+  constructor(torrentKey) { super(`No se pudo resolver la clave del torrent ${torrentKey}`) }
 }
 
 /* Global */

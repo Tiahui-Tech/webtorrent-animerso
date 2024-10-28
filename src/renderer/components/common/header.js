@@ -14,7 +14,7 @@ const useDiscordUser = require('../../hooks/useDiscordUser');
 
 const SearchInput = require('./search-input');
 const { Icon } = require('@iconify/react');
-const { Skeleton } = require('@nextui-org/react');
+const { Skeleton, Divider, Tooltip } = require('@nextui-org/react');
 
 const Header = ({ state }) => {
   const navigate = useNavigate();
@@ -25,10 +25,11 @@ const Header = ({ state }) => {
   const appUserDiscordId = state?.saved?.activation?.discordId
   const appIsBlocked = state?.saved?.activation?.blocked
 
-  const { data: discordUser, isLoading: isLoadingDiscordUser, error: errorDiscordUser } = useDiscordUser(appUserDiscordId);
+  const { data: userData, isLoading: isLoadingUserData } = useDiscordUser(appUserDiscordId);
 
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
+  const [canGoHome, setCanGoHome] = useState(false);
   const [isHome, setIsHome] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const [opacity, setOpacity] = useState(1);
@@ -67,6 +68,11 @@ const Header = ({ state }) => {
     // Debug logging
     console.log('History updated:', JSON.stringify(historyRef.current, null, 2));
   }, [location]);
+
+  useEffect(() => {
+    const currentPath = location.pathname;
+    setCanGoHome(currentPath !== '/' || searchTerm);
+  }, [location, searchTerm]);
 
   useEffect(() => {
     const updateMaximizedState = () => {
@@ -145,12 +151,19 @@ const Header = ({ state }) => {
   }, [navigate]);
 
   const handleHome = useCallback(() => {
-    if (!isHome) {
-      navigate('/');
+    if (!canGoHome) return;
+
+    const resetSearch = () => {
       setDebouncedSearchTerm('');
       setSearchTerm('');
+    };
+
+    if (!isHome) {
+      navigate('/');
     }
-  }, [isHome, navigate, setDebouncedSearchTerm, setSearchTerm]);
+
+    resetSearch();
+  }, [canGoHome, isHome, navigate, setDebouncedSearchTerm, setSearchTerm]);
 
   const startDrag = (e) => {
     if (e.button !== 0) return;
@@ -234,7 +247,7 @@ const Header = ({ state }) => {
 
           {/* Animeton Logo */}
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <button onClick={handleHome} className={isHome ? 'cursor-default' : 'cursor-pointer'} style={{ WebkitAppRegion: 'no-drag', zIndex: 9999 }}>
+            <button onClick={handleHome} className={canGoHome ? 'cursor-pointer' : 'cursor-default'} style={{ WebkitAppRegion: 'no-drag', zIndex: 9999 }}>
               <div className="flex flex-col items-center">
                 <p className="text-white font-bold text-2xl leading-none">Animeton</p>
                 <span className="text-zinc-400 text-xs mt-1 leading-none">Beta cerrada</span>
@@ -247,8 +260,10 @@ const Header = ({ state }) => {
 
             {/* Discord User */}
             {(appIsActivated && appUserDiscordId && !appIsBlocked) && (
-              <div className="flex flex-row items-center gap-2 bg-zinc-900 rounded-full pl-1 pr-3 py-1">
-                {isLoadingDiscordUser ? (
+              <div className="flex flex-row items-center gap-2 bg-zinc-900 rounded-full pl-1 pr-3 py-1" style={{
+                zIndex: 9999, pointerEvents: 'auto', WebkitAppRegion: 'no-drag'
+              }}>
+                {isLoadingUserData ? (
                   <>
                     <Skeleton className="rounded-full" style={{ backgroundColor: '#ffffff30' }}>
                       <div className="w-8 h-8 rounded-full bg-default-200"></div>
@@ -259,13 +274,22 @@ const Header = ({ state }) => {
                   </>
                 ) : (
                   <>
+                    <Tooltip content="¡Consigue mas interactuando en discord!" className='bg-zinc-900 text-white' placement='bottom'>
+                      <div className="flex flex-row items-center gap-1">
+                        <img src={'assets/icons/coin.png'} alt="coin" className="w-4 h-4 ml-2" />
+                        <span className="text-white font-medium text-sm">
+                          {userData?.user?.coins || 0}
+                        </span>
+                      </div>
+                    </Tooltip>
+                    <Divider orientation="vertical" className="h-8" />
                     <img
-                      src={discordUser?.assets?.avatarURL}
-                      alt={discordUser?.basicInfo?.globalName}
+                      src={userData?.discord?.avatarURL}
+                      alt={userData?.discord?.username}
                       className="w-8 h-8 rounded-full"
                     />
                     <span className="text-white font-medium text-sm">
-                      {discordUser?.basicInfo?.globalName || '???'}
+                      {userData?.discord?.username || '???'}
                     </span>
                   </>
                 )}

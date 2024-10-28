@@ -576,6 +576,13 @@ function onOpen(files) {
 function onError(err) {
   console.error(err.stack || err);
   sound.play('ERROR');
+
+  eventBus.emit('navigate', {
+    path: -1,
+    state: null
+  })
+  eventBus.emit('historyUpdated');
+
   state.errors.push({
     time: new Date().getTime(),
     message: err.message || err
