@@ -6,6 +6,7 @@ const arch = require('arch')
 const APP_NAME = 'Animeton'
 const APP_TEAM = 'Tiahui Tech'
 const APP_VERSION = require('../package.json').version
+const { API_BASE_URL } = require('./constants/config')
 
 const IS_TEST = isTest()
 const PORTABLE_PATH = IS_TEST
@@ -19,7 +20,7 @@ const UI_TORRENT_HEIGHT = 100
 
 module.exports = {
   ANNOUNCEMENT_URL: 'https://webtorrent.io/desktop/announcement',
-  AUTO_UPDATE_URL: 'https://webtorrent.io/desktop/update',
+  AUTO_UPDATE_URL: `${API_BASE_URL}/github/latest`,
   CRASH_REPORT_URL: 'https://webtorrent.io/desktop/crash-report',
   TELEMETRY_URL: 'https://webtorrent.io/desktop/telemetry',
 
@@ -73,7 +74,7 @@ module.exports = {
   UI_TORRENT_HEIGHT
 }
 
-function getConfigPath () {
+function getConfigPath() {
   if (IS_PORTABLE) {
     return PORTABLE_PATH
   } else {
@@ -81,7 +82,7 @@ function getConfigPath () {
   }
 }
 
-function getDefaultDownloadPath () {
+function getDefaultDownloadPath() {
   if (IS_PORTABLE) {
     return path.join(getConfigPath(), 'Downloads')
   } else {
@@ -89,7 +90,7 @@ function getDefaultDownloadPath () {
   }
 }
 
-function getPath (key) {
+function getPath(key) {
   if (!process.versions.electron) {
     // Node.js process
     return ''
@@ -102,11 +103,11 @@ function getPath (key) {
   }
 }
 
-function isTest () {
+function isTest() {
   return process.env.NODE_ENV === 'test'
 }
 
-function isPortable () {
+function isPortable() {
   if (IS_TEST) {
     return true
   }
@@ -128,7 +129,7 @@ function isPortable () {
   }
 }
 
-function isProduction () {
+function isProduction() {
   if (!process.versions.electron) {
     // Node.js process
     return false

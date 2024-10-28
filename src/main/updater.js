@@ -9,17 +9,14 @@ const config = require('../config')
 const log = require('./log')
 const windows = require('./windows')
 
-const AUTO_UPDATE_URL = config.AUTO_UPDATE_URL +
-  '?version=' + config.APP_VERSION +
-  '&platform=' + process.platform +
-  '&sysarch=' + config.OS_SYSARCH
+const AUTO_UPDATE_URL = config.AUTO_UPDATE_URL
 
 // TODO: Implement auto-updater
 function init () {
   if (process.platform === 'linux') {
     // initLinux()
   } else {
-    // initDarwinWin32()
+    initDarwinWin32()
   }
 }
 
