@@ -17,8 +17,6 @@ const Home = require('./Home');
 const AnimeDetails = require('./AnimeDetails');
 
 const Player = require('./player-page');
-const CreateTorrent = React.lazy(() => require('./create-torrent-page'));
-const Preferences = require('./preferences-page');
 
 const eventBus = require('../lib/event-bus');
 const { dispatch } = require('../lib/dispatcher');
@@ -28,23 +26,7 @@ function getCurrentPath() {
   return currentPath;
 }
 
-const Modals = {
-  'open-torrent-address-modal': React.lazy(() =>
-    require('../components/common/modal/open-torrent-address-modal')
-  ),
-  'remove-torrent-modal': React.lazy(() =>
-    require('../components/common/modal/remove-torrent-modal')
-  ),
-  'update-available-modal': React.lazy(() =>
-    require('../components/common/modal/update-available-modal')
-  ),
-  'unsupported-media-modal': React.lazy(() =>
-    require('../components/common/modal/unsupported-media-modal')
-  ),
-  'delete-all-torrents-modal': React.lazy(() =>
-    require('../components/common/modal/delete-all-torrents-modal')
-  )
-};
+const UpdateDownloadedModal = require('../components/common/modal/update-downloaded-modal')
 
 function App({ initialState, onUpdate }) {
   return (
@@ -57,6 +39,7 @@ function App({ initialState, onUpdate }) {
 function AppContent({ initialState, onUpdate }) {
   const [state, setState] = useState(initialState);
   const [currentTorrent, setCurrentTorrent] = useState(null);
+  const [updateDownloadedModalOpen, setUpdateDownloadedModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -95,6 +78,10 @@ function AppContent({ initialState, onUpdate }) {
     };
     eventBus.on('torrentUpdate', torrentUpdateHandler);
 
+    eventBus.on('updateDownloaded', () => {
+      setUpdateDownloadedModalOpen(true);
+    });
+
   }, [navigate, location]);
 
   useEffect(() => {
@@ -120,7 +107,7 @@ function AppContent({ initialState, onUpdate }) {
         className={`dark text-foreground bg-background min-h-screen overflow-y-auto ${cls.join(' ')}`}
       >
         <Header state={state} />
-        <ErrorPopover state={state}/>
+        <ErrorPopover state={state} />
         <div
           key="content"
           className="content"
@@ -137,24 +124,16 @@ function AppContent({ initialState, onUpdate }) {
                 element={<AnimeDetails state={state} />}
               />
               <Route path="/player" element={<Player state={state} currentTorrent={currentTorrent} />} />
-              <Route
-                path="/create-torrent"
-                element={<CreateTorrent state={state} />}
-              />
-              <Route
-                path="/preferences"
-                element={<Preferences state={state} />}
-              />
             </Routes>
           </React.Suspense>
         </div>
-        <Modal state={state} />
+        <UpdateDownloadedModal isOpen={updateDownloadedModalOpen} setIsOpen={setUpdateDownloadedModalOpen} />
       </div>
     </main>
   );
 }
 
-function ErrorPopover({ state}) {
+function ErrorPopover({ state }) {
   const now = new Date().getTime();
   const recentErrors = state.errors.filter((x) => now - x.time < 5000);
   const hasErrors = recentErrors.length > 0;
@@ -199,23 +178,6 @@ function ErrorPopover({ state}) {
           </div>
         </motion.div>
       ))}
-    </div>
-  );
-}
-
-function Modal({ state }) {
-  if (!state.modal) return null;
-
-  const ModalContents = Modals[state.modal.id];
-
-  return (
-    <div key="modal" className="modal">
-      <div key="modal-background" className="modal-background" />
-      <div key="modal-content" className="modal-content">
-        <React.Suspense fallback={<div>Loading modal...</div>}>
-          <ModalContents state={state} />
-        </React.Suspense>
-      </div>
     </div>
   );
 }

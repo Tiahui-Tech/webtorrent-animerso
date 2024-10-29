@@ -370,7 +370,16 @@ const dispatchHandlers = {
   uncaughtError: (proc, err) => telemetry.logUncaughtError(proc, err),
   stateSave: () => State.save(state),
   stateSaveImmediate: () => State.saveImmediate(state),
-  update: () => { } // No-op, just trigger an update
+  update: () => { }, // No-op, just trigger an update
+
+  // Update handling
+  updateDownloaded: () => {
+    eventBus.emit('updateDownloaded');
+  },
+  
+  quitAndInstall: () => {
+    ipcRenderer.send('quitAndInstall')
+  },
 };
 
 // Events from the UI never modify state directly. Instead they call dispatch()

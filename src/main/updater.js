@@ -57,7 +57,9 @@ function initDarwinWin32 () {
 
   autoUpdater.on(
     'update-available',
-    () => log('Update available')
+    () => {
+      log('Update available')
+    }
   )
 
   autoUpdater.on(
@@ -67,7 +69,10 @@ function initDarwinWin32 () {
 
   autoUpdater.on(
     'update-downloaded',
-    (e, notes, name, date, url) => log(`Update downloaded: ${name}: ${url}`)
+    (e, notes, name, date, url) => {
+      log(`Update downloaded: ${name}: ${url}`)
+      windows.main.dispatch('updateDownloaded')
+    }
   )
 
   autoUpdater.setFeedURL({ url: AUTO_UPDATE_URL })
