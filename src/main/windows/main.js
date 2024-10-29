@@ -16,7 +16,7 @@ const main = module.exports = {
   updateDiscordRPC
 }
 
-const { app, BrowserWindow, screen } = require('electron')
+const { app, BrowserWindow, screen, ipcMain, autoUpdater } = require('electron')
 const debounce = require('debounce')
 const DiscordRPC = require('discord-rpc')
 
@@ -121,6 +121,12 @@ function init(state, options) {
 
   // Initialize Discord RPC
   initDiscordRPC()
+
+  // Add IPC handler for quit and install
+  ipcMain.on('quitAndInstall', () => {
+    app.isQuitting = true
+    autoUpdater.quitAndInstall()
+  })
 }
 
 function dispatch(...args) {

@@ -248,8 +248,16 @@ function buildDarwin (cb) {
 
     fs.writeFileSync(infoPlistPath, plist.build(infoPlist))
 
-    // Copy torrent file icon into app bundle
-    cp.execSync(`cp ${config.APP_FILE_ICON + '.icns'} ${resourcesPath}`)
+    const sourceIcon = config.APP_FILE_ICON + '.icns'
+    const targetIcon = path.join(resourcesPath, path.basename(config.APP_FILE_ICON) + '.icns')
+    
+    try {
+      fs.copyFileSync(sourceIcon, targetIcon)
+      console.log('Icon copied successfully')
+    } catch (err) {
+      console.error('Error copying icon:', err)
+      // Continuar con la ejecución incluso si falla la copia del ícono
+    }
 
     if (process.platform === 'darwin') {
       if (argv.sign) {

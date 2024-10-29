@@ -191,12 +191,6 @@ function onState(err, _state) {
 
 // Runs a few seconds after the app loads, to avoid slowing down startup time
 function delayedInit() {
-  telemetry.send(state);
-
-  // Send telemetry data every 12 hours, for users who keep the app running
-  // for extended periods of time
-  setInterval(() => telemetry.send(state), 12 * 3600 * 1000);
-
   // Warn if the download dir is gone, eg b/c an external drive is unplugged
   checkDownloadPath();
 
@@ -376,7 +370,16 @@ const dispatchHandlers = {
   uncaughtError: (proc, err) => telemetry.logUncaughtError(proc, err),
   stateSave: () => State.save(state),
   stateSaveImmediate: () => State.saveImmediate(state),
-  update: () => { } // No-op, just trigger an update
+  update: () => { }, // No-op, just trigger an update
+
+  // Update handling
+  updateDownloaded: () => {
+    eventBus.emit('updateDownloaded');
+  },
+  
+  quitAndInstall: () => {
+    ipcRenderer.send('quitAndInstall')
+  },
 };
 
 // Events from the UI never modify state directly. Instead they call dispatch()

@@ -26,39 +26,7 @@ function init (state) {
   }
 }
 
-function send (state) {
-  const now = new Date()
-  telemetry.version = config.APP_VERSION
-  telemetry.timestamp = now.toISOString()
-  telemetry.localTime = now.toTimeString()
-  telemetry.screens = getScreenInfo()
-  telemetry.system = getSystemInfo()
-  telemetry.torrentStats = getTorrentStats(state)
-  telemetry.approxNumTorrents = telemetry.torrentStats.approxCount
-
-  if (!config.IS_PRODUCTION) {
-    // Development: telemetry used only for local debugging
-    // Empty uncaught errors, etc at the start of every run
-    return reset()
-  }
-
-  const get = require('simple-get')
-
-  const opts = {
-    url: config.TELEMETRY_URL,
-    body: telemetry,
-    json: true
-  }
-
-  get.post(opts, (err, res) => {
-    if (err) return console.error('Error sending telemetry', err)
-    if (res.statusCode !== 200) {
-      return console.error(`Error sending telemetry, status code: ${res.statusCode}`)
-    }
-    console.log('Sent telemetry')
-    reset()
-  })
-}
+function send (state) {}
 
 function reset () {
   telemetry.uncaughtErrors = []

@@ -9,17 +9,14 @@ const config = require('../config')
 const log = require('./log')
 const windows = require('./windows')
 
-const AUTO_UPDATE_URL = config.AUTO_UPDATE_URL +
-  '?version=' + config.APP_VERSION +
-  '&platform=' + process.platform +
-  '&sysarch=' + config.OS_SYSARCH
+const AUTO_UPDATE_URL = config.AUTO_UPDATE_URL
 
 // TODO: Implement auto-updater
 function init () {
   if (process.platform === 'linux') {
     // initLinux()
   } else {
-    // initDarwinWin32()
+    initDarwinWin32()
   }
 }
 
@@ -60,7 +57,9 @@ function initDarwinWin32 () {
 
   autoUpdater.on(
     'update-available',
-    () => log('Update available')
+    () => {
+      log('Update available')
+    }
   )
 
   autoUpdater.on(
@@ -70,7 +69,10 @@ function initDarwinWin32 () {
 
   autoUpdater.on(
     'update-downloaded',
-    (e, notes, name, date, url) => log(`Update downloaded: ${name}: ${url}`)
+    (e, notes, name, date, url) => {
+      log(`Update downloaded: ${name}: ${url}`)
+      windows.main.dispatch('updateDownloaded')
+    }
   )
 
   autoUpdater.setFeedURL({ url: AUTO_UPDATE_URL })

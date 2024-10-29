@@ -18,10 +18,7 @@ const UI_HEADER_HEIGHT = 38
 const UI_TORRENT_HEIGHT = 100
 
 module.exports = {
-  ANNOUNCEMENT_URL: 'https://webtorrent.io/desktop/announcement',
-  AUTO_UPDATE_URL: 'https://webtorrent.io/desktop/update',
-  CRASH_REPORT_URL: 'https://webtorrent.io/desktop/crash-report',
-  TELEMETRY_URL: 'https://webtorrent.io/desktop/telemetry',
+  AUTO_UPDATE_URL: `https://updates.animeton.com/update/${process.platform}/${APP_VERSION}`,
 
   APP_COPYRIGHT: `Copyright © 2024-${new Date().getFullYear()} ${APP_TEAM}`,
   APP_FILE_ICON: path.join(__dirname, '..', 'static', 'assets', 'animeton_file'),
@@ -73,7 +70,7 @@ module.exports = {
   UI_TORRENT_HEIGHT
 }
 
-function getConfigPath () {
+function getConfigPath() {
   if (IS_PORTABLE) {
     return PORTABLE_PATH
   } else {
@@ -81,7 +78,7 @@ function getConfigPath () {
   }
 }
 
-function getDefaultDownloadPath () {
+function getDefaultDownloadPath() {
   if (IS_PORTABLE) {
     return path.join(getConfigPath(), 'Downloads')
   } else {
@@ -89,7 +86,7 @@ function getDefaultDownloadPath () {
   }
 }
 
-function getPath (key) {
+function getPath(key) {
   if (!process.versions.electron) {
     // Node.js process
     return ''
@@ -102,11 +99,11 @@ function getPath (key) {
   }
 }
 
-function isTest () {
+function isTest() {
   return process.env.NODE_ENV === 'test'
 }
 
-function isPortable () {
+function isPortable() {
   if (IS_TEST) {
     return true
   }
@@ -128,7 +125,7 @@ function isPortable () {
   }
 }
 
-function isProduction () {
+function isProduction() {
   if (!process.versions.electron) {
     // Node.js process
     return false
