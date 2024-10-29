@@ -53,7 +53,7 @@ const Home = ({ state }) => {
     <div>
       {!searchTerm && (
         <>
-          {/* <AnimeCarousel animes={animes} /> */}
+          <AnimeCarousel animes={animes} />
           <LatestEpisodes state={state} sectionTitle={'Ultimos Episodios'} />
         </>
       )}

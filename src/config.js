@@ -6,7 +6,6 @@ const arch = require('arch')
 const APP_NAME = 'Animeton'
 const APP_TEAM = 'Tiahui Tech'
 const APP_VERSION = require('../package.json').version
-const { API_BASE_URL } = require('./constants/config')
 
 const IS_TEST = isTest()
 const PORTABLE_PATH = IS_TEST
@@ -19,10 +18,10 @@ const UI_HEADER_HEIGHT = 38
 const UI_TORRENT_HEIGHT = 100
 
 module.exports = {
-  ANNOUNCEMENT_URL: 'https://webtorrent.io/desktop/announcement',
-  AUTO_UPDATE_URL: `${API_BASE_URL}/github/latest`,
-  CRASH_REPORT_URL: 'https://webtorrent.io/desktop/crash-report',
-  TELEMETRY_URL: 'https://webtorrent.io/desktop/telemetry',
+  ANNOUNCEMENT_URL: '',
+  AUTO_UPDATE_URL: `https://updates.animeton.com/update/${process.platform}/${APP_VERSION}`,
+  CRASH_REPORT_URL: '',
+  TELEMETRY_URL: '',
 
   APP_COPYRIGHT: `Copyright © 2024-${new Date().getFullYear()} ${APP_TEAM}`,
   APP_FILE_ICON: path.join(__dirname, '..', 'static', 'assets', 'animeton_file'),
