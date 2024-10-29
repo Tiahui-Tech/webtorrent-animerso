@@ -225,7 +225,12 @@ function Player({ state, currentTorrent }) {
 
     // Reset attempts for new torrent
     if (subtitleCheckRef.current.infoHash !== infoHash) {
-      subtitleCheckRef.current = { infoHash, attempts: 0, lastMaxLength: 0 };
+      subtitleCheckRef.current = { 
+        infoHash, 
+        attempts: 0, 
+        lastMaxLength: 0,
+        lastThreeLengths: [] // Añadimos un array para trackear los últimos 3 lengths
+      };
     }
 
     const MAX_ATTEMPTS = 16;
@@ -235,23 +240,38 @@ function Player({ state, currentTorrent }) {
       dispatch('checkForSubtitles', currentTorrent);
       subtitleCheckRef.current.attempts++;
 
-      // Check if more subtitle checks are needed based on existence, length, matching, and changes
-      const needsMoreChecks = !exist || maxLength < 300 || !matchCurrentTorrent || maxLength !== lastMaxLength;
+      // Update length history
+      if (maxLength > 0) {
+        subtitleCheckRef.current.lastThreeLengths.push(maxLength);
+        if (subtitleCheckRef.current.lastThreeLengths.length > 3) {
+          subtitleCheckRef.current.lastThreeLengths.shift(); // Keep only the last 3
+        }
+      }
+
+      // Check if the last 3 lengths are equal
+      const lastThreeLengths = subtitleCheckRef.current.lastThreeLengths;
+      const hasThreeEqualLengths = lastThreeLengths.length === 3 && 
+        lastThreeLengths.every(length => length === lastThreeLengths[0]);
+
+      // Check if more subtitle checks are needed
+      const needsMoreChecks = attempts >= 8 
+        ? (!exist || maxLength < 300 || !matchCurrentTorrent || !hasThreeEqualLengths) 
+        : true;
 
       sendNotification(state, { title: `Subtítulos`, message: `Buscando... Intento: ${attempts + 1}/${MAX_ATTEMPTS}`, type: 'debug' })
 
       if (needsMoreChecks) {
-        // Schedule next check in 15 seconds
         const timeoutId = setTimeout(checkForSubtitles, 10000);
-        // Update lastMaxLength for next comparison
         subtitleCheckRef.current.lastMaxLength = maxLength;
-
-        // Store the timeout ID for potential cancellation
         subtitleCheckRef.current.timeoutId = timeoutId;
       } else {
         setAllSubtitlesFound(true);
-        sendNotification(state, { title: 'Subtítulos', message: `Se encontraron subtítulos validos, deteniendo búsqueda...`, type: 'debug' })
-        console.log('Valid subtitles found or no changes in maxLength, stopping checks');
+        sendNotification(state, { 
+          title: 'Subtítulos', 
+          message: `Se encontraron subtítulos válidos y estables, deteniendo búsqueda...`, 
+          type: 'debug' 
+        })
+        console.log('Valid subtitles found with 3 consistent lengths, stopping checks');
       }
     } else {
       sendNotification(state, { title: 'Subtítulos', message: `Se han alcanzado el máximo de intentos de búsqueda para este torrent.`, type: 'debug' })
@@ -739,7 +759,7 @@ function renderLoadingSpinner(state) {
           <span className="progress">{fileProgress}%</span> downloaded
         </span>
         <span> ↓ {prettyBytes(prog.downloadSpeed || 0)}/s</span>
-        <span> ↑ {prettyBytes(prog.uploadSpeed || 0)}/s</span>
+        <span>  {prettyBytes(prog.uploadSpeed || 0)}/s</span>
       </div>
     </div>
   );

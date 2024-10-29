@@ -47,14 +47,14 @@ function AppContent({ initialState, onUpdate }) {
   stateRef.current = state;
 
   // Clean all torrents on startup
-  useEffect(() => {
-    const savedTorrents = state.saved.torrents;
+  // useEffect(() => {
+  //   const savedTorrents = state.saved.torrents;
 
-    savedTorrents.forEach(async (torrent) => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      dispatch('deleteTorrent', torrent.infoHash, true);
-    });
-  }, []);
+  //   savedTorrents.forEach(async (torrent) => {
+  //     await new Promise(resolve => setTimeout(resolve, 1000));
+  //     dispatch('deleteTorrent', torrent.infoHash, true);
+  //   });
+  // }, []);
 
   useEffect(() => {
     currentPath = location.pathname;
