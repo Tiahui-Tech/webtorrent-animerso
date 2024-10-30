@@ -153,7 +153,7 @@ function Player({ state, currentTorrent }) {
     currentTorrent
   });
   const hasCheckedSubtitles = useRef(false);
-  const subtitleCheckRef = useRef({ infoHash: null, attempts: 0, lastMaxLength: 0 });
+  const subtitleCheckRef = useRef({ infoHash: null, attempts: 0, lastThreeLengths: [] });
 
   useEffect(() => {
     // Update subtitles reference with current values
