@@ -154,50 +154,47 @@ module.exports = class SubtitlesController {
   }
 
   async convertAndAddSubtitles(subtitles, infoHash) {
-    const convertedTracks = [];
+    const convertedTracks = []
 
     for (const [trackNumber, subtitle] of Object.entries(subtitles)) {
       if (subtitle.track.type === 'ass') {
         try {
-          const vttContent = await this.convertAssToVtt(subtitle);
+          const vttContent = await this.convertAssToVtt(subtitle)
           convertedTracks.push({
             buffer: 'data:text/vtt;base64,' + Buffer.from(vttContent).toString('base64'),
             language: subtitle.track.language || 'Unknown',
             label: subtitle.track.name || `Track ${trackNumber}`,
             filePath: `memory:${trackNumber}`,
             infoHash
-          });
+          })
         } catch (error) {
-          console.error('Error converting subtitle:', error);
+          console.error('Error converting subtitle:', error)
         }
       }
     }
 
-    const updatedTracks = [...convertedTracks];
-    let selectedIndex = this.state.playing.subtitles.selectedIndex;
+    const updatedTracks = [...convertedTracks]
+    let selectedIndex = this.state.playing.subtitles.selectedIndex
     if (selectedIndex === -1 && convertedTracks.length > 0) {
-      selectedIndex = this.state.playing.subtitles.tracks.length;
+      selectedIndex = this.state.playing.subtitles.tracks.length
     }
 
     console.log('1- filtering subtitles');
-    const uniqueSubtitles = relabelAndFilterSubtitles(updatedTracks, infoHash);
+    const uniqueSubtitles = relabelAndFilterSubtitles(updatedTracks, infoHash)
     console.log('2- sorting subtitles');
-    const filteredAndSortedTracks = filterRenameAndSortSubtitles(uniqueSubtitles);
+    const filteredAndSortedTracks = filterRenameAndSortSubtitles(uniqueSubtitles)
     console.log('3- parsed subtitles');
 
-    console.log('filteredAndSortedTracks', filteredAndSortedTracks);
+    this.state.playing.subtitles.selectedIndex = selectedIndex
 
-    this.state.playing.subtitles.selectedIndex = selectedIndex;
-
-    console.log('emit subtitlesUpdate', infoHash);
+    console.log('emit subtitlesUpdate', infoHash)
     eventBus.emit('subtitlesUpdate', {
       infoHash,
       tracks: filteredAndSortedTracks
-    });
+    })
   }
 
   convertAssToVtt(subtitle) {
-    console.log('convertAssToVtt subtitle', subtitle.cues);
     return new Promise((resolve) => {
       const vttContent = 'WEBVTT\n\n' + subtitle.cues.map((cue) => {
         const startTime = formatVttTime(cue.time);
