@@ -1,5 +1,6 @@
 const React = require('react');
 const { useState, useEffect, useCallback, useRef } = require('react');
+const { usePostHog } = require('posthog-js/react');
 const {
   useNavigate,
   useLocation,
@@ -21,9 +22,11 @@ const PLAYER_PATH = '/player';
 const isPlayerRoute = (path) => path?.includes(PLAYER_PATH);
 
 const Header = ({ state }) => {
+  const posthog = usePostHog();
   const navigate = useNavigate();
   const location = useLocation();
   const historyRef = useRef({ past: [], current: null, future: [] });
+  const identifySentRef = useRef(false);
 
   const appIsActivated = state?.saved?.activation?.key
   const appUserDiscordId = state?.saved?.activation?.discordId
@@ -53,6 +56,18 @@ const Header = ({ state }) => {
   };
 
   useEffect(() => {
+    const appKey = state?.saved?.activation?.key;
+    const discordUser = userData?.discord;
+
+    if (discordUser && !identifySentRef.current) {
+      posthog.identify(`${discordUser.username}-${discordUser.id}`, {
+        appKey,
+      });
+      identifySentRef.current = true;
+    }
+  }, [userData]);
+
+  useEffect(() => {
     const currentPath = location.pathname;
     const isCurrentPlayer = isPlayerRoute(currentPath);
     const wasPreviousPlayer = isPlayerRoute(historyRef.current.current);
@@ -67,10 +82,16 @@ const Header = ({ state }) => {
       historyRef.current.current = currentPath;
 
       // Clear the future only if it's not a player route
-      // This prevents the "forward" button from appearing active after exiting player
       if (!isCurrentPlayer) {
         historyRef.current.future = [];
       }
+
+      // Track route change
+      posthog.capture('route_changed', {
+        from: historyRef.current.past[historyRef.current.past.length - 1] || null,
+        to: currentPath,
+        method: 'navigation'
+      });
     }
     // Update navigation states
     // A player route doesn't count for forward navigation
@@ -180,6 +201,14 @@ const Header = ({ state }) => {
         historyRef.current.future.unshift(historyRef.current.current);
         historyRef.current.current = prevPage;
         navigate(prevPage);
+        
+        // Track back navigation
+        posthog.capture('route_changed', {
+          from: historyRef.current.current,
+          to: prevPage,
+          method: 'back_button'
+        });
+        
         eventBus.emit('historyUpdated');
       }
     }
@@ -198,6 +227,14 @@ const Header = ({ state }) => {
         historyRef.current.past.push(historyRef.current.current);
         historyRef.current.current = nextPage;
         navigate(nextPage);
+
+        // Track forward navigation
+        posthog.capture('route_changed', {
+          from: historyRef.current.past[historyRef.current.past.length - 1],
+          to: nextPage,
+          method: 'forward_button'
+        });
+
         eventBus.emit('historyUpdated');
       }
     }

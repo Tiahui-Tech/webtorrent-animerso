@@ -5,6 +5,8 @@
  *   actually used because auto-prefixing is disabled with
  *   `darkBaseTheme.userAgent = false`. Return a fake object.
  */
+require('dotenv').config();
+
 const Module = require('module');
 const _require = Module.prototype.require;
 Module.prototype.require = function (id) {
@@ -29,6 +31,7 @@ const fs = require('fs');
 const React = require('react');
 const { createRoot } = require('react-dom/client');
 const { NextUIProvider } = require('@nextui-org/react');
+const { PostHogProvider } = require('posthog-js/react');
 
 const config = require('../config');
 const telemetry = require('./lib/telemetry');
@@ -136,9 +139,19 @@ function onState(err, _state) {
   const container = document.querySelector('#body');
   const root = createRoot(container);
 
+  const posthogOptions = {
+    api_host: process.env.REACT_APP_PUBLIC_POSTHOG_HOST,
+  }
+
+  console.log('posthogOptions', posthogOptions);
+  
   root.render(
     <NextUIProvider>
-      <App initialState={state} onUpdate={handleUpdate} />
+      <PostHogProvider
+        apiKey={process.env.REACT_APP_PUBLIC_POSTHOG_KEY}
+        options={posthogOptions}>
+        <App initialState={state} onUpdate={handleUpdate} />
+      </PostHogProvider>
     </NextUIProvider>
   );
 
@@ -376,7 +389,7 @@ const dispatchHandlers = {
   updateDownloaded: () => {
     eventBus.emit('updateDownloaded');
   },
-  
+
   quitAndInstall: () => {
     ipcRenderer.send('quitAndInstall')
   },
