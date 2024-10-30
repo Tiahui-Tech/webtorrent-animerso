@@ -60,6 +60,8 @@ function init(state, options) {
     x: initialBounds.x,
     y: initialBounds.y
   })
+  // Extra validation to ensure the window is not smaller than the minimum size
+  win.setMinimumSize(config.WINDOW_MIN_WIDTH, config.WINDOW_MIN_HEIGHT)
   require('@electron/remote/main').enable(win.webContents)
 
   win.loadURL(config.WINDOW_MAIN)
@@ -105,6 +107,16 @@ function init(state, options) {
   }, 1000))
 
   win.on('resize', debounce(e => {
+    const bounds = main.win.getBounds()
+    if (bounds.height < config.WINDOW_MIN_HEIGHT || bounds.width < config.WINDOW_MIN_WIDTH) {
+      main.win.setMinimumSize(config.WINDOW_MIN_WIDTH, config.WINDOW_MIN_HEIGHT)
+      main.win.setBounds({
+        width: Math.max(bounds.width, config.WINDOW_MIN_WIDTH),
+        height: Math.max(bounds.height, config.WINDOW_MIN_HEIGHT),
+        x: bounds.x,
+        y: bounds.y
+      })
+    }
     send('windowBoundsChanged', main.win.getBounds())
   }, 1000))
 

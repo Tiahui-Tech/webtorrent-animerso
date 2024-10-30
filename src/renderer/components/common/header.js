@@ -39,6 +39,7 @@ const Header = ({ state }) => {
   const [opacity, setOpacity] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   // Debounced setDebouncedSearchTerm
   const debouncedSetSearchTerm = useCallback(
@@ -92,16 +93,33 @@ const Header = ({ state }) => {
   }, [location, searchTerm]);
 
   useEffect(() => {
-    const updateMaximizedState = () => {
-      const focusedWindow = remote.BrowserWindow.getFocusedWindow();
-      setIsMaximized(focusedWindow ? focusedWindow.isMaximized() : false);
+    let win;
+    try {
+      win = remote.getCurrentWindow();
+    } catch (error) {
+      console.error('Error getting window reference:', error);
+      return;
+    }
+
+    const handleMaximize = () => setIsMaximized(true);
+    const handleUnmaximize = () => setIsMaximized(false);
+    const handleResize = () => {
+      if (win) setIsMaximized(win.isMaximized());
     };
 
-    updateMaximizedState();
-    window.addEventListener('resize', updateMaximizedState);
+    setIsMaximized(win.isMaximized());
+
+    win.addListener('maximize', handleMaximize);
+    win.addListener('unmaximize', handleUnmaximize);
+    win.addListener('resize', handleResize);
 
     return () => {
-      window.removeEventListener('resize', updateMaximizedState);
+      if (win) {
+        // Remove event listeners
+        win.removeListener('maximize', handleMaximize);
+        win.removeListener('unmaximize', handleUnmaximize);
+        win.removeListener('resize', handleResize);
+      }
     };
   }, []);
 
@@ -208,21 +226,73 @@ const Header = ({ state }) => {
 
   const handleWindowControl = (action) => (e) => {
     e.stopPropagation();
-    const focusedWindow = remote.BrowserWindow.getFocusedWindow();
-    if (focusedWindow) {
+    
+    const win = remote.getCurrentWindow();
+    if (!win) return;
+
+    try {
       switch (action) {
         case 'minimize':
-          focusedWindow.minimize();
+          win.minimize();
           break;
         case 'maximize':
-          isMaximized ? focusedWindow.unmaximize() : focusedWindow.maximize();
+          if (win.isFullScreen()) {
+            win.setFullScreen(false);
+            setTimeout(() => {
+              if (win.isFullScreen()) {
+                win.maximize();
+              }
+            }, 100);
+          } else if (win.isMaximized()) {
+            win.unmaximize();
+          } else {
+            win.maximize();
+          }
           break;
         case 'close':
-          focusedWindow.close();
+          win.close();
           break;
       }
+    } catch (error) {
+      console.error(`Error executing window action ${action}:`, error);
     }
   };
+
+  // En el componente Header, actualizar el useEffect de fullscreen
+  useEffect(() => {
+    const win = remote.getCurrentWindow();
+
+    const updateFullscreenState = () => {
+      const isWindowFullScreen = win.isFullScreen() || win.isMaximized();
+      setIsFullScreen(isWindowFullScreen);
+      setIsMaximized(isWindowFullScreen);
+    };
+
+    // Escuchar eventos de fullscreen y maximizado
+    const handleStateChange = () => {
+      updateFullscreenState();
+    };
+
+    // Escuchar eventos del player
+    eventBus.on('fullscreenChange', handleStateChange);
+    
+    // Escuchar eventos nativos de la ventana
+    win.addListener('enter-full-screen', handleStateChange);
+    win.addListener('leave-full-screen', handleStateChange);
+    win.addListener('maximize', handleStateChange);
+    win.addListener('unmaximize', handleStateChange);
+
+    // Estado inicial
+    updateFullscreenState();
+
+    return () => {
+      eventBus.off('fullscreenChange', handleStateChange);
+      win.removeListener('enter-full-screen', handleStateChange);
+      win.removeListener('leave-full-screen', handleStateChange);
+      win.removeListener('maximize', handleStateChange);
+      win.removeListener('unmaximize', handleStateChange);
+    };
+  }, []);
 
   return (
     <div
@@ -346,7 +416,12 @@ const Header = ({ state }) => {
                 style={{ WebkitAppRegion: 'no-drag', zIndex: 9999 }}
                 className="p-1 hover:bg-zinc-800 rounded"
               >
-                <Icon icon={isMaximized ? "gravity-ui:copy" : "gravity-ui:square"} className="pointer-events-none" width="26" height="26" />
+                <Icon 
+                  icon={isFullScreen || isMaximized ? "gravity-ui:copy" : "gravity-ui:square"} 
+                  className="pointer-events-none" 
+                  width="26" 
+                  height="26" 
+                />
               </button>
               <button
                 onClick={handleWindowControl('close')}
