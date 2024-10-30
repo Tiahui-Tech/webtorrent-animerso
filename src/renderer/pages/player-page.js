@@ -221,15 +221,14 @@ function Player({ state, currentTorrent }) {
     if (!currentTorrent) return;
 
     const infoHash = currentTorrent.infoHash;
-    const { attempts, lastMaxLength } = subtitleCheckRef.current;
+    const { attempts, lastThreeLengths } = subtitleCheckRef.current;
 
     // Reset attempts for new torrent
     if (subtitleCheckRef.current.infoHash !== infoHash) {
       subtitleCheckRef.current = { 
         infoHash, 
         attempts: 0, 
-        lastMaxLength: 0,
-        lastThreeLengths: [] // Añadimos un array para trackear los últimos 3 lengths
+        lastThreeLengths: []
       };
     }
 
@@ -242,14 +241,13 @@ function Player({ state, currentTorrent }) {
 
       // Update length history
       if (maxLength > 0) {
-        subtitleCheckRef.current.lastThreeLengths.push(maxLength);
-        if (subtitleCheckRef.current.lastThreeLengths.length > 3) {
-          subtitleCheckRef.current.lastThreeLengths.shift(); // Keep only the last 3
+        lastThreeLengths.push(maxLength);
+        if (lastThreeLengths.length > 3) {
+          lastThreeLengths.shift(); // Keep only the last 3
         }
       }
 
       // Check if the last 3 lengths are equal
-      const lastThreeLengths = subtitleCheckRef.current.lastThreeLengths;
       const hasThreeEqualLengths = lastThreeLengths.length === 3 && 
         lastThreeLengths.every(length => length === lastThreeLengths[0]);
 
@@ -262,7 +260,6 @@ function Player({ state, currentTorrent }) {
 
       if (needsMoreChecks) {
         const timeoutId = setTimeout(checkForSubtitles, 10000);
-        subtitleCheckRef.current.lastMaxLength = maxLength;
         subtitleCheckRef.current.timeoutId = timeoutId;
       } else {
         setAllSubtitlesFound(true);
