@@ -39,7 +39,6 @@ const Header = ({ state }) => {
   const [opacity, setOpacity] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [isFullScreen, setIsFullScreen] = useState(false);
 
   // Debounced setDebouncedSearchTerm
   const debouncedSetSearchTerm = useCallback(
@@ -258,42 +257,6 @@ const Header = ({ state }) => {
     }
   };
 
-  // En el componente Header, actualizar el useEffect de fullscreen
-  useEffect(() => {
-    const win = remote.getCurrentWindow();
-
-    const updateFullscreenState = () => {
-      const isWindowFullScreen = win.isFullScreen() || win.isMaximized();
-      setIsFullScreen(isWindowFullScreen);
-      setIsMaximized(isWindowFullScreen);
-    };
-
-    // Escuchar eventos de fullscreen y maximizado
-    const handleStateChange = () => {
-      updateFullscreenState();
-    };
-
-    // Escuchar eventos del player
-    eventBus.on('fullscreenChange', handleStateChange);
-    
-    // Escuchar eventos nativos de la ventana
-    win.addListener('enter-full-screen', handleStateChange);
-    win.addListener('leave-full-screen', handleStateChange);
-    win.addListener('maximize', handleStateChange);
-    win.addListener('unmaximize', handleStateChange);
-
-    // Estado inicial
-    updateFullscreenState();
-
-    return () => {
-      eventBus.off('fullscreenChange', handleStateChange);
-      win.removeListener('enter-full-screen', handleStateChange);
-      win.removeListener('leave-full-screen', handleStateChange);
-      win.removeListener('maximize', handleStateChange);
-      win.removeListener('unmaximize', handleStateChange);
-    };
-  }, []);
-
   return (
     <div
       onMouseDown={startDrag}
@@ -417,7 +380,7 @@ const Header = ({ state }) => {
                 className="p-1 hover:bg-zinc-800 rounded"
               >
                 <Icon 
-                  icon={isFullScreen || isMaximized ? "gravity-ui:copy" : "gravity-ui:square"} 
+                  icon={isMaximized ? "gravity-ui:copy" : "gravity-ui:square"} 
                   className="pointer-events-none" 
                   width="26" 
                   height="26" 

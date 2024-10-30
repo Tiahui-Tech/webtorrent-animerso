@@ -246,7 +246,11 @@ function toggleDevTools() {
   }
 }
 
-function toggleFullScreen() {
+function toggleFullScreen(flag) {
+  if (flag) {
+    return main.win.setFullScreen(flag)
+  }
+
   if (!main.win || !main.win.isVisible()) {
     return
   }

@@ -44,6 +44,7 @@ function getDefaultState () {
       bounds: null, /* {x, y, width, height } */
       isFocused: true,
       isFullScreen: false,
+      isVideoFullScreen: false,
       title: config.APP_WINDOW_TITLE
     },
     selectedInfoHash: null, /* the torrent we've selected to view details. see state.torrents */
