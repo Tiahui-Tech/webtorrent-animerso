@@ -470,6 +470,7 @@ function renderMedia(state, currentSubtitles) {
       onError={dispatcher('mediaError')}
       onTimeUpdate={dispatcher('mediaTimeUpdate')}
       onEncrypted={dispatcher('mediaEncrypted')}
+      crossOrigin="anonymous"
     >
       {trackTags}
     </MediaTagName>
