@@ -26,7 +26,7 @@ function UpdateDownloadedModal({ isOpen, setIsOpen }) {
             Más tarde
           </Button>
           <Button 
-            className="bg-white text-black font-bold hover:bg-opacity-90 transition-all duration-300 px-6 font-semibold"
+            className="bg-white text-black font-bold hover:bg-opacity-90 transition-all duration-300 px-6"
             onPress={() => dispatch('quitAndInstall')}
           >
             Reiniciar
