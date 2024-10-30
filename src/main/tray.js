@@ -76,7 +76,7 @@ function getMenuTemplate () {
   return [
     getToggleItem(),
     {
-      label: 'Quit',
+      label: 'Salir',
       click: () => app.quit()
     }
   ]
@@ -84,12 +84,12 @@ function getMenuTemplate () {
   function getToggleItem () {
     if (windows.main.win.isVisible()) {
       return {
-        label: 'Hide to tray',
+        label: 'Ocultar',
         click: () => windows.main.hide()
       }
     } else {
       return {
-        label: 'Show WebTorrent',
+        label: 'Mostrar Animeton',
         click: () => windows.main.show()
       }
     }
