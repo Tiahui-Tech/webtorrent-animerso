@@ -18,7 +18,7 @@ const UI_HEADER_HEIGHT = 38
 const UI_TORRENT_HEIGHT = 100
 
 module.exports = {
-  AUTO_UPDATE_URL: `https://updates.animeton.com/update/${process.platform}/${APP_VERSION}`,
+  AUTO_UPDATE_URL: `https://client.animeton.com/update/${process.platform}/${APP_VERSION}`,
 
   APP_COPYRIGHT: `Copyright © 2024-${new Date().getFullYear()} ${APP_TEAM}`,
   APP_FILE_ICON: path.join(__dirname, '..', 'static', 'assets', 'animeton_file'),
