@@ -16,6 +16,10 @@ const SearchInput = require('./search-input');
 const { Icon } = require('@iconify/react');
 const { Skeleton, Divider, Tooltip } = require('@nextui-org/react');
 
+const PLAYER_PATH = '/player';
+
+const isPlayerRoute = (path) => path?.includes(PLAYER_PATH);
+
 const Header = ({ state }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -50,23 +54,36 @@ const Header = ({ state }) => {
 
   useEffect(() => {
     const currentPath = location.pathname;
+    const isCurrentPlayer = isPlayerRoute(currentPath);
+    const wasPreviousPlayer = isPlayerRoute(historyRef.current.current);
 
-    if (!currentPath.includes('/player')) {
-      if (historyRef.current.current !== currentPath) {
-        if (historyRef.current.current) {
-          historyRef.current.past.push(historyRef.current.current);
-        }
-        historyRef.current.current = currentPath;
+    // Only update history if:
+    // 1. It's a new route different from the current one
+    // 2. We're not navigating between player routes
+    if (historyRef.current.current !== currentPath && !(isCurrentPlayer && wasPreviousPlayer)) {
+      if (historyRef.current.current) {
+        historyRef.current.past.push(historyRef.current.current);
+      }
+      historyRef.current.current = currentPath;
+
+      // Clear the future only if it's not a player route
+      // This prevents the "forward" button from appearing active after exiting player
+      if (!isCurrentPlayer) {
         historyRef.current.future = [];
       }
     }
-
+    // Update navigation states
+    // A player route doesn't count for forward navigation
     setCanGoBack(historyRef.current.past.length > 0);
-    setCanGoForward(historyRef.current.future.length > 0);
+    setCanGoForward(historyRef.current.future.length > 0 && !isPlayerRoute(historyRef.current.future[0]));
     setIsHome(currentPath === '/');
 
     // Debug logging
-    console.log('History updated:', JSON.stringify(historyRef.current, null, 2));
+    console.log('History state:', {
+      past: historyRef.current.past,
+      current: historyRef.current.current,
+      future: historyRef.current.future
+    });
   }, [location]);
 
   useEffect(() => {
@@ -119,7 +136,7 @@ const Header = ({ state }) => {
   useEffect(() => {
     const updateNavigationState = () => {
       setCanGoBack(historyRef.current.past.length > 0);
-      setCanGoForward(historyRef.current.future.length > 0);
+      setCanGoForward(historyRef.current.future.length > 0 && !isPlayerRoute(historyRef.current.future[0]));
     };
 
     updateNavigationState();
@@ -131,22 +148,41 @@ const Header = ({ state }) => {
   const handleBack = useCallback((e) => {
     e.preventDefault();
     if (historyRef.current.past.length > 0) {
-      const prevPage = historyRef.current.past.pop();
-      historyRef.current.future.unshift(historyRef.current.current);
-      historyRef.current.current = prevPage;
-      navigate(prevPage);
-      eventBus.emit('historyUpdated');
+      let prevPage;
+      const currentIsPlayer = isPlayerRoute(historyRef.current.current);
+
+      if (currentIsPlayer) {
+        do {
+          prevPage = historyRef.current.past.pop();
+        } while (isPlayerRoute(prevPage) && historyRef.current.past.length > 0);
+      } else {
+        prevPage = historyRef.current.past.pop();
+      }
+
+      if (prevPage && !isPlayerRoute(prevPage)) {
+        historyRef.current.future.unshift(historyRef.current.current);
+        historyRef.current.current = prevPage;
+        navigate(prevPage);
+        eventBus.emit('historyUpdated');
+      }
     }
   }, [navigate]);
 
   const handleForward = useCallback((e) => {
     e.preventDefault();
     if (historyRef.current.future.length > 0) {
-      const nextPage = historyRef.current.future.shift();
-      historyRef.current.past.push(historyRef.current.current);
-      historyRef.current.current = nextPage;
-      navigate(nextPage);
-      eventBus.emit('historyUpdated');
+      let nextPage;
+
+      do {
+        nextPage = historyRef.current.future.shift();
+      } while (isPlayerRoute(nextPage) && historyRef.current.future.length > 0);
+
+      if (nextPage && !isPlayerRoute(nextPage)) {
+        historyRef.current.past.push(historyRef.current.current);
+        historyRef.current.current = nextPage;
+        navigate(nextPage);
+        eventBus.emit('historyUpdated');
+      }
     }
   }, [navigate]);
 
