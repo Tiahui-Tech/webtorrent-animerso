@@ -140,8 +140,6 @@ function onState(err, _state) {
   const posthogOptions = {
     api_host: 'https://us.i.posthog.com',
   }
-
-  console.log('posthogOptions', posthogOptions);
   
   root.render(
     <NextUIProvider>
