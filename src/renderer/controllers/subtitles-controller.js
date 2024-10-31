@@ -187,7 +187,7 @@ module.exports = class SubtitlesController {
 
     this.state.playing.subtitles.selectedIndex = selectedIndex
 
-    console.log('emit subtitlesUpdate', infoHash);
+    console.log('emit subtitlesUpdate', infoHash)
     eventBus.emit('subtitlesUpdate', {
       infoHash,
       tracks: filteredAndSortedTracks
@@ -196,12 +196,23 @@ module.exports = class SubtitlesController {
 
   convertAssToVtt(subtitle) {
     return new Promise((resolve) => {
-      const vttContent = 'WEBVTT\n\n' + subtitle.cues.map((cue, index) => {
+      const vttContent = 'WEBVTT\n\n' + subtitle.cues.map((cue) => {
         const startTime = formatVttTime(cue.time);
         const endTime = formatVttTime(cue.time + cue.duration);
-        const text = convertAssTextToVtt(cue.text);
+        
+        let cueSettings = [];
+        
+        if (cue.text.includes('subtitle-box')) {
+          cueSettings.push('line:-4');
+          cueSettings.push('position:50');
+          cueSettings.push('align:center');
+          cueSettings.push('size:80%');
+        }
 
-        return `${startTime} --> ${endTime}\n${text}\n`;
+        const text = convertAssTextToVtt(cue.text);
+        const settings = cueSettings.length ? ` ${cueSettings.join(' ')}` : '';
+
+        return `${startTime} --> ${endTime}${settings}\n${text}\n`;
       }).join('\n');
 
       resolve(vttContent);

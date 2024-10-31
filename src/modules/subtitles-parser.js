@@ -59,37 +59,66 @@ async function parseSubtitles(filePath) {
 }
 
 const convertAssTextToVtt = (text) => {
-  text = text.replace(/\{[^}]+\}/g, '');
+  // Skip drawing commands as they will be handled separately
+  if (text.includes('\\p1') && text.includes('m 0 0 l')) {
+    return '';
+  }
 
-  text = text.replace(/\\N/g, '\n');
+  const styles = [];
+  const styleMatches = text.match(/\{[^}]+\}/g) || [];
+  
+  styleMatches.forEach(match => {
+    // Parse ASS color codes in format c&HRRGGBB&
+    if (match.includes('c&H')) {
+      const colorMatch = match.match(/c&H([0-9A-Fa-f]{6})&/);
+      if (colorMatch) {
+        styles.push(`color: #${colorMatch[1]}`);
+      }
+    }
+    
+    // Extract font size
+    const fsMatch = match.match(/\\fs(\d+)/);
+    if (fsMatch) {
+      styles.push(`font-size: ${fsMatch[1]}px`);
+    }
 
-  text = text.replace(/\\h/g, ' ');
+    // Map ASS alignment codes (1-9) to CSS text alignment
+    const anMatch = match.match(/\\an(\d)/);
+    if (anMatch) {
+      const alignMap = {
+        '1': 'left', '2': 'center', '3': 'right',
+        '4': 'left', '5': 'center', '6': 'right',
+        '7': 'left', '8': 'center', '9': 'right'
+      };
+      styles.push(`text-align: ${alignMap[anMatch[1]] || 'center'}`);
+    }
+  });
 
-  text = text.replace(/\\b([01])/g, (match, p1) => p1 === '1' ? '<b>' : '</b>');
+  // Clean ASS commands and normalize line breaks
+  text = text
+    .replace(/\{[^}]+\}/g, '')
+    .replace(/\\N/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\{\\N\}/g, '\n')
+    .replace(/\{\\n\}/g, '\n');
 
-  text = text.replace(/\\i([01])/g, (match, p1) => p1 === '1' ? '<i>' : '</i>');
+  text = text.split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .join('\n');
 
-  text = text.replace(/\\u([01])/g, (match, p1) => p1 === '1' ? '<u>' : '</u>');
+  // Wrap multiline text or text after drawing in a subtitle box
+  if (text.includes('\n') || styleMatches.some(s => s.includes('\\p1'))) {
+    const styleAttr = styles.length > 0 ? ` style="${styles.join('; ')}"` : '';
+    return `<div class="subtitle-box"${styleAttr}>${text}</div>`;
+  }
 
-  text = text.replace(/\\s([01])/g, (match, p1) => p1 === '1' ? '<span style="text-decoration: line-through;">' : '</span>');
-
-  text = text.replace(/\\fn([^\\]+)/g, '<span style="font-family: $1;">');
-
-  text = text.replace(/\\fs([0-9]+)/g, '<span style="font-size: $1px;">');
-
-  text = text.replace(/\\c&H([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})&/g,
-    (match, r, g, b) => `<span style="color: rgb(${parseInt(r, 16)},${parseInt(g, 16)},${parseInt(b, 16)});">`);
-
-  const openSpans = (text.match(/<span/g) || []).length;
-  const closeSpans = (text.match(/<\/span>/g) || []).length;
-  text += '</span>'.repeat(openSpans - closeSpans);
-
-  text = text.split('\n').map(line => line.trim()).join('\n');
-
-  text = text.replace(/\n{3,}/g, '\n\n');
+  if (styles.length > 0) {
+    return `<span style="${styles.join('; ')}">${text}</span>`;
+  }
 
   return text;
-}
+};
 
 function formatVttTime(milliseconds) {
   const totalSeconds = Math.floor(milliseconds / 1000);
@@ -105,4 +134,4 @@ module.exports = {
   parseSubtitles,
   convertAssTextToVtt,
   formatVttTime
-}
+};
