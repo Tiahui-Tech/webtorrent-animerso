@@ -50,7 +50,7 @@ function AppContent({ initialState, onUpdate }) {
   // Track page views
   useEffect(() => {
     currentPath = location.pathname;
-    posthog.capture('page_view', {
+    posthog?.capture('page_view', {
       path: location.pathname
     });
 
@@ -71,7 +71,7 @@ function AppContent({ initialState, onUpdate }) {
       console.log('torrentUpdateHandler', torrentSummary);
       setCurrentTorrent(torrentSummary);
       // Track torrent updates
-      posthog.capture('torrent_update', {
+      posthog?.capture('torrent_update', {
         infoHash: torrentSummary.infoHash,
         name: torrentSummary.name,
         progress: torrentSummary.progress
@@ -81,7 +81,7 @@ function AppContent({ initialState, onUpdate }) {
 
     eventBus.on('updateDownloaded', () => {
       setUpdateDownloadedModalOpen(true);
-      posthog.capture('update_downloaded');
+      posthog?.capture('update_downloaded');
     });
 
   }, [navigate, location, posthog]);
@@ -89,7 +89,7 @@ function AppContent({ initialState, onUpdate }) {
   // Track torrent cleanup on startup
   useEffect(() => {
     const savedTorrents = state.saved.torrents;
-    posthog.capture('cleanup_torrents', {
+    posthog?.capture('cleanup_torrents', {
       count: savedTorrents.length
     });
 
