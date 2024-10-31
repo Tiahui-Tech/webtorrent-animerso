@@ -47,7 +47,24 @@ function AppContent({ initialState, onUpdate }) {
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  // Track page views
+  // Garbage collector and memory cleanup
+  useEffect(() => {
+    const cleanup = () => {
+      if (global.gc) global.gc();
+      
+      if (window.performance && window.performance.memory) {
+        window.performance.memory.usedJSHeapSize = 0;
+      }
+    };
+
+    cleanup();
+    
+    return () => {
+      cleanup();
+    };
+  }, [location.pathname]);
+
+  // Page views
   useEffect(() => {
     currentPath = location.pathname;
     posthog?.capture('page_view', {
@@ -85,7 +102,7 @@ function AppContent({ initialState, onUpdate }) {
 
   }, [navigate, location, posthog]);
 
-  // Track torrent cleanup on startup
+  // Torrent cleanup on startup
   useEffect(() => {
     const savedTorrents = state.saved.torrents;
     posthog?.capture('cleanup_torrents', {

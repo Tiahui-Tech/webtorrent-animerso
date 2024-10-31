@@ -55,7 +55,11 @@ function init(state, options) {
       contextIsolation: false,
       enableBlinkFeatures: 'AudioVideoTracks',
       enableRemoteModule: true,
-      backgroundThrottling: false
+      backgroundThrottling: false,
+      enablePreferredSizeMode: true,
+      spellcheck: false,
+      webgl: false,
+      offscreen: false
     },
     x: initialBounds.x,
     y: initialBounds.y
@@ -139,6 +143,23 @@ function init(state, options) {
     app.isQuitting = true
     autoUpdater.quitAndInstall()
   })
+
+  // Add memory management
+  win.webContents.on('did-finish-load', () => {
+    // Set memory limits
+    app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512');
+    
+    // Periodically clean up memory
+    setInterval(() => {
+      if (global.gc) global.gc();
+    }, 60000);
+  });
+
+  // Clean up when window is closed
+  win.on('closed', () => {
+    if (global.gc) global.gc();
+    win = null;
+  });
 }
 
 function dispatch(...args) {
