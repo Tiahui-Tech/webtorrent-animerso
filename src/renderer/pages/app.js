@@ -73,8 +73,7 @@ function AppContent({ initialState, onUpdate }) {
       // Track torrent updates
       posthog?.capture('torrent_update', {
         infoHash: torrentSummary.infoHash,
-        name: torrentSummary.name,
-        progress: torrentSummary.progress
+        name: torrentSummary.name
       });
     };
     eventBus.on('torrentUpdate', torrentUpdateHandler);
