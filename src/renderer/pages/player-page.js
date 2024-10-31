@@ -225,9 +225,9 @@ function Player({ state, currentTorrent }) {
 
     // Reset attempts for new torrent
     if (subtitleCheckRef.current.infoHash !== infoHash) {
-      subtitleCheckRef.current = { 
-        infoHash, 
-        attempts: 0, 
+      subtitleCheckRef.current = {
+        infoHash,
+        attempts: 0,
         lastThreeLengths: []
       };
     }
@@ -248,12 +248,12 @@ function Player({ state, currentTorrent }) {
       }
 
       // Check if the last 3 lengths are equal
-      const hasThreeEqualLengths = lastThreeLengths.length === 3 && 
+      const hasThreeEqualLengths = lastThreeLengths.length === 3 &&
         lastThreeLengths.every(length => length === lastThreeLengths[0]);
 
       // Check if more subtitle checks are needed
-      const needsMoreChecks = attempts >= 8 
-        ? (!exist || maxLength < 300 || !matchCurrentTorrent || !hasThreeEqualLengths) 
+      const needsMoreChecks = attempts >= 8
+        ? (!exist || maxLength < 300 || !matchCurrentTorrent || !hasThreeEqualLengths)
         : true;
 
       sendNotification(state, { title: `Subtítulos`, message: `Buscando... Intento: ${attempts + 1}/${MAX_ATTEMPTS}`, type: 'debug' })
@@ -263,10 +263,10 @@ function Player({ state, currentTorrent }) {
         subtitleCheckRef.current.timeoutId = timeoutId;
       } else {
         setAllSubtitlesFound(true);
-        sendNotification(state, { 
-          title: 'Subtítulos', 
-          message: `Se encontraron subtítulos válidos y estables, deteniendo búsqueda...`, 
-          type: 'debug' 
+        sendNotification(state, {
+          title: 'Subtítulos',
+          message: `Se encontraron subtítulos válidos y estables, deteniendo búsqueda...`,
+          type: 'debug'
         })
         console.log('Valid subtitles found with 3 consistent lengths, stopping checks');
       }
@@ -1217,7 +1217,15 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
 
   function handleFullScreen() {
     const currentWindow = remote.getCurrentWindow();
-    const isCurrentlyFullScreen = currentWindow.isMaximized() || state.window.isVideoFullScreen;
+    const currentScreen = remote.screen.getDisplayMatching(currentWindow.getBounds());
+    const workAreaSize = currentScreen.workAreaSize;
+    const currentSize = currentWindow.getSize();
+
+
+    const isMaximizedInSize = currentSize[0] === workAreaSize.width &&
+      currentSize[1] === workAreaSize.height;
+
+    const isCurrentlyFullScreen = isMaximizedInSize || currentWindow.isMaximized() || state.window.isVideoFullScreen;
 
     if (isCurrentlyFullScreen) {
       exitFullScreen(currentWindow);

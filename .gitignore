@@ -3,6 +3,7 @@ build/
 dist/
 npm-debug.log*
 .vscode/
+.env
 
 # JetBrains IntelliJ IDEA project files
 .idea

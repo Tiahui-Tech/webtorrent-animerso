@@ -148,25 +148,12 @@ function getMenuTemplate () {
       label: 'View',
       submenu: [
         {
-          label: 'Full Screen',
-          type: 'checkbox',
-          accelerator: process.platform === 'darwin'
-            ? 'Ctrl+Command+F'
-            : 'F11',
-          click: () => windows.main.toggleFullScreen()
-        },
-        {
           label: 'Float on Top',
           type: 'checkbox',
           click: () => windows.main.toggleAlwaysOnTop()
         },
         {
           type: 'separator'
-        },
-        {
-          label: 'Go Back',
-          accelerator: 'Esc',
-          click: () => windows.main.dispatch('escapeBack')
         },
         {
           type: 'separator'

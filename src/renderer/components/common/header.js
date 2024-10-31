@@ -1,5 +1,6 @@
 const React = require('react');
 const { useState, useEffect, useCallback, useRef } = require('react');
+const { usePostHog } = require('posthog-js/react');
 const {
   useNavigate,
   useLocation,
@@ -16,10 +17,16 @@ const SearchInput = require('./search-input');
 const { Icon } = require('@iconify/react');
 const { Skeleton, Divider, Tooltip } = require('@nextui-org/react');
 
+const PLAYER_PATH = '/player';
+
+const isPlayerRoute = (path) => path?.includes(PLAYER_PATH);
+
 const Header = ({ state }) => {
+  const posthog = usePostHog();
   const navigate = useNavigate();
   const location = useLocation();
   const historyRef = useRef({ past: [], current: null, future: [] });
+  const identifySentRef = useRef(false);
 
   const appIsActivated = state?.saved?.activation?.key
   const appUserDiscordId = state?.saved?.activation?.discordId
@@ -49,24 +56,55 @@ const Header = ({ state }) => {
   };
 
   useEffect(() => {
-    const currentPath = location.pathname;
+    const appKey = state?.saved?.activation?.key;
+    const discordUser = userData?.discord;
 
-    if (!currentPath.includes('/player')) {
-      if (historyRef.current.current !== currentPath) {
-        if (historyRef.current.current) {
-          historyRef.current.past.push(historyRef.current.current);
-        }
-        historyRef.current.current = currentPath;
+    if (discordUser && !identifySentRef.current) {
+      posthog.identify(`${discordUser.username}-${discordUser.id}`, {
+        appKey,
+      });
+      identifySentRef.current = true;
+    }
+  }, [userData]);
+
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const isCurrentPlayer = isPlayerRoute(currentPath);
+    const wasPreviousPlayer = isPlayerRoute(historyRef.current.current);
+
+    // Only update history if:
+    // 1. It's a new route different from the current one
+    // 2. We're not navigating between player routes
+    if (historyRef.current.current !== currentPath && !(isCurrentPlayer && wasPreviousPlayer)) {
+      if (historyRef.current.current) {
+        historyRef.current.past.push(historyRef.current.current);
+      }
+      historyRef.current.current = currentPath;
+
+      // Clear the future only if it's not a player route
+      if (!isCurrentPlayer) {
         historyRef.current.future = [];
       }
-    }
 
+      // Track route change
+      posthog.capture('route_changed', {
+        from: historyRef.current.past[historyRef.current.past.length - 1] || null,
+        to: currentPath,
+        method: 'navigation'
+      });
+    }
+    // Update navigation states
+    // A player route doesn't count for forward navigation
     setCanGoBack(historyRef.current.past.length > 0);
-    setCanGoForward(historyRef.current.future.length > 0);
+    setCanGoForward(historyRef.current.future.length > 0 && !isPlayerRoute(historyRef.current.future[0]));
     setIsHome(currentPath === '/');
 
     // Debug logging
-    console.log('History updated:', JSON.stringify(historyRef.current, null, 2));
+    console.log('History state:', {
+      past: historyRef.current.past,
+      current: historyRef.current.current,
+      future: historyRef.current.future
+    });
   }, [location]);
 
   useEffect(() => {
@@ -75,16 +113,33 @@ const Header = ({ state }) => {
   }, [location, searchTerm]);
 
   useEffect(() => {
-    const updateMaximizedState = () => {
-      const focusedWindow = remote.BrowserWindow.getFocusedWindow();
-      setIsMaximized(focusedWindow ? focusedWindow.isMaximized() : false);
+    let win;
+    try {
+      win = remote.getCurrentWindow();
+    } catch (error) {
+      console.error('Error getting window reference:', error);
+      return;
+    }
+
+    const handleMaximize = () => setIsMaximized(true);
+    const handleUnmaximize = () => setIsMaximized(false);
+    const handleResize = () => {
+      if (win) setIsMaximized(win.isMaximized());
     };
 
-    updateMaximizedState();
-    window.addEventListener('resize', updateMaximizedState);
+    setIsMaximized(win.isMaximized());
+
+    win.addListener('maximize', handleMaximize);
+    win.addListener('unmaximize', handleUnmaximize);
+    win.addListener('resize', handleResize);
 
     return () => {
-      window.removeEventListener('resize', updateMaximizedState);
+      if (win) {
+        // Remove event listeners
+        win.removeListener('maximize', handleMaximize);
+        win.removeListener('unmaximize', handleUnmaximize);
+        win.removeListener('resize', handleResize);
+      }
     };
   }, []);
 
@@ -119,7 +174,7 @@ const Header = ({ state }) => {
   useEffect(() => {
     const updateNavigationState = () => {
       setCanGoBack(historyRef.current.past.length > 0);
-      setCanGoForward(historyRef.current.future.length > 0);
+      setCanGoForward(historyRef.current.future.length > 0 && !isPlayerRoute(historyRef.current.future[0]));
     };
 
     updateNavigationState();
@@ -131,22 +186,57 @@ const Header = ({ state }) => {
   const handleBack = useCallback((e) => {
     e.preventDefault();
     if (historyRef.current.past.length > 0) {
-      const prevPage = historyRef.current.past.pop();
-      historyRef.current.future.unshift(historyRef.current.current);
-      historyRef.current.current = prevPage;
-      navigate(prevPage);
-      eventBus.emit('historyUpdated');
+      let prevPage;
+      const currentIsPlayer = isPlayerRoute(historyRef.current.current);
+
+      if (currentIsPlayer) {
+        do {
+          prevPage = historyRef.current.past.pop();
+        } while (isPlayerRoute(prevPage) && historyRef.current.past.length > 0);
+      } else {
+        prevPage = historyRef.current.past.pop();
+      }
+
+      if (prevPage && !isPlayerRoute(prevPage)) {
+        historyRef.current.future.unshift(historyRef.current.current);
+        historyRef.current.current = prevPage;
+        navigate(prevPage);
+        
+        // Track back navigation
+        posthog.capture('route_changed', {
+          from: historyRef.current.current,
+          to: prevPage,
+          method: 'back_button'
+        });
+        
+        eventBus.emit('historyUpdated');
+      }
     }
   }, [navigate]);
 
   const handleForward = useCallback((e) => {
     e.preventDefault();
     if (historyRef.current.future.length > 0) {
-      const nextPage = historyRef.current.future.shift();
-      historyRef.current.past.push(historyRef.current.current);
-      historyRef.current.current = nextPage;
-      navigate(nextPage);
-      eventBus.emit('historyUpdated');
+      let nextPage;
+
+      do {
+        nextPage = historyRef.current.future.shift();
+      } while (isPlayerRoute(nextPage) && historyRef.current.future.length > 0);
+
+      if (nextPage && !isPlayerRoute(nextPage)) {
+        historyRef.current.past.push(historyRef.current.current);
+        historyRef.current.current = nextPage;
+        navigate(nextPage);
+
+        // Track forward navigation
+        posthog.capture('route_changed', {
+          from: historyRef.current.past[historyRef.current.past.length - 1],
+          to: nextPage,
+          method: 'forward_button'
+        });
+
+        eventBus.emit('historyUpdated');
+      }
     }
   }, [navigate]);
 
@@ -172,19 +262,35 @@ const Header = ({ state }) => {
 
   const handleWindowControl = (action) => (e) => {
     e.stopPropagation();
-    const focusedWindow = remote.BrowserWindow.getFocusedWindow();
-    if (focusedWindow) {
+    
+    const win = remote.getCurrentWindow();
+    if (!win) return;
+
+    try {
       switch (action) {
         case 'minimize':
-          focusedWindow.minimize();
+          win.minimize();
           break;
         case 'maximize':
-          isMaximized ? focusedWindow.unmaximize() : focusedWindow.maximize();
+          if (win.isFullScreen()) {
+            win.setFullScreen(false);
+            setTimeout(() => {
+              if (win.isFullScreen()) {
+                win.maximize();
+              }
+            }, 100);
+          } else if (win.isMaximized()) {
+            win.unmaximize();
+          } else {
+            win.maximize();
+          }
           break;
         case 'close':
-          focusedWindow.close();
+          win.close();
           break;
       }
+    } catch (error) {
+      console.error(`Error executing window action ${action}:`, error);
     }
   };
 
@@ -310,7 +416,12 @@ const Header = ({ state }) => {
                 style={{ WebkitAppRegion: 'no-drag', zIndex: 9999 }}
                 className="p-1 hover:bg-zinc-800 rounded"
               >
-                <Icon icon={isMaximized ? "gravity-ui:copy" : "gravity-ui:square"} className="pointer-events-none" width="26" height="26" />
+                <Icon 
+                  icon={isMaximized ? "gravity-ui:copy" : "gravity-ui:square"} 
+                  className="pointer-events-none" 
+                  width="26" 
+                  height="26" 
+                />
               </button>
               <button
                 onClick={handleWindowControl('close')}

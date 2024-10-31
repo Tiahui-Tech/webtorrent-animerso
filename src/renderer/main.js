@@ -29,6 +29,7 @@ const fs = require('fs');
 const React = require('react');
 const { createRoot } = require('react-dom/client');
 const { NextUIProvider } = require('@nextui-org/react');
+const { PostHogProvider } = require('posthog-js/react');
 
 const config = require('../config');
 const telemetry = require('./lib/telemetry');
@@ -136,9 +137,17 @@ function onState(err, _state) {
   const container = document.querySelector('#body');
   const root = createRoot(container);
 
+  const posthogOptions = {
+    api_host: 'https://us.i.posthog.com',
+  }
+  
   root.render(
     <NextUIProvider>
-      <App initialState={state} onUpdate={handleUpdate} />
+      <PostHogProvider
+        apiKey={'phc_T5wad1TWciA187DmTuXur4wikGDfFPV6LzEDYXx9Vw'}
+        options={posthogOptions}>
+        <App initialState={state} onUpdate={handleUpdate} />
+      </PostHogProvider>
     </NextUIProvider>
   );
 
@@ -376,7 +385,7 @@ const dispatchHandlers = {
   updateDownloaded: () => {
     eventBus.emit('updateDownloaded');
   },
-  
+
   quitAndInstall: () => {
     ipcRenderer.send('quitAndInstall')
   },
