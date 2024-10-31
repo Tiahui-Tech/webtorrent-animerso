@@ -20,7 +20,7 @@ const ErrorPopover = ({ state }) => {
 
     useEffect(() => {
         posthog?.capture('error_popover', {
-            errors: recentErrors,
+            error: recentErrors[recentErrors.length - 1],
         });
     }, [recentErrors]);
 
