@@ -7,10 +7,10 @@ const {
   useLocation,
   useNavigate
 } = require('react-router-dom');
-const { motion } = require('framer-motion');
+const { usePostHog } = require('posthog-js/react');
 
 const Header = require('../components/common/header');
-const { Icon } = require('@iconify/react');
+const ErrorPopover = require('../components/common/error-popover');
 
 // Perf optimization: Needed immediately, so do not lazy load it
 const Home = require('./Home');
@@ -42,22 +42,17 @@ function AppContent({ initialState, onUpdate }) {
   const [updateDownloadedModalOpen, setUpdateDownloadedModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-
+  const posthog = usePostHog();
+  
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  // Clean all torrents on startup
-  useEffect(() => {
-    const savedTorrents = state.saved.torrents;
-
-    savedTorrents.forEach(async (torrent) => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      dispatch('deleteTorrent', torrent.infoHash, true);
-    });
-  }, []);
-
+  // Track page views
   useEffect(() => {
     currentPath = location.pathname;
+    posthog.capture('page_view', {
+      path: location.pathname
+    });
 
     const stateUpdateHandler = (newPartialState) => {
       setState((prevState) => {
@@ -75,14 +70,34 @@ function AppContent({ initialState, onUpdate }) {
     const torrentUpdateHandler = (torrentSummary) => {
       console.log('torrentUpdateHandler', torrentSummary);
       setCurrentTorrent(torrentSummary);
+      // Track torrent updates
+      posthog.capture('torrent_update', {
+        infoHash: torrentSummary.infoHash,
+        name: torrentSummary.name,
+        progress: torrentSummary.progress
+      });
     };
     eventBus.on('torrentUpdate', torrentUpdateHandler);
 
     eventBus.on('updateDownloaded', () => {
       setUpdateDownloadedModalOpen(true);
+      posthog.capture('update_downloaded');
     });
 
-  }, [navigate, location]);
+  }, [navigate, location, posthog]);
+
+  // Track torrent cleanup on startup
+  useEffect(() => {
+    const savedTorrents = state.saved.torrents;
+    posthog.capture('cleanup_torrents', {
+      count: savedTorrents.length
+    });
+
+    savedTorrents.forEach(async (torrent) => {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      dispatch('deleteTorrent', torrent.infoHash, true);
+    });
+  }, [posthog]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -130,55 +145,6 @@ function AppContent({ initialState, onUpdate }) {
         <UpdateDownloadedModal isOpen={updateDownloadedModalOpen} setIsOpen={setUpdateDownloadedModalOpen} />
       </div>
     </main>
-  );
-}
-
-function ErrorPopover({ state }) {
-  const now = new Date().getTime();
-  const recentErrors = state.errors.filter((x) => now - x.time < 5000);
-  const hasErrors = recentErrors.length > 0;
-
-  if (!hasErrors) return null;
-
-  const errorColors = {
-    error: '#f31260',
-    alert: '#ff961f',
-    debug: '#336ecc'
-  };
-
-  return (
-    <div
-      key="errors"
-      className="fixed left-4 flex flex-col space-y-4"
-      style={{ zIndex: 9999, top: '72px' }}
-    >
-      {recentErrors.map((error, i) => (
-        <motion.div
-          key={i}
-          initial={{ opacity: 0, x: -100 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3 }}
-          className={`text-white px-4 pr-6 py-3 rounded-xl shadow-md flex items-center`}
-          style={{
-            backgroundColor: errorColors[error.type] || errorColors.error
-          }}
-        >
-          <Icon
-            icon={error.type === "debug" ? "gravity-ui:wrench" : "gravity-ui:diamond-exclamation"}
-            width="32"
-            height="32"
-            style={{ color: 'white' }}
-            className="mr-3"
-          />
-          <div>
-            <h3 className="font-bold mb-1">
-              {error.title || 'Ha ocurrido un error...'}
-            </h3>
-            <p className="text-sm text-white/80">{error.message}</p>
-          </div>
-        </motion.div>
-      ))}
-    </div>
   );
 }
 

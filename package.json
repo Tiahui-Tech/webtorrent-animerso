@@ -1,7 +1,7 @@
 {
   "name": "animeton",
   "description": "Animeton, the streaming torrent client. For Mac, Windows, and Linux.",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "author": {
     "name": "Tiahui Tech",
     "email": "contact@tiahui.tech",
@@ -61,6 +61,7 @@
     "music-metadata": "7.14.0",
     "network-address": "1.1.2",
     "parse-torrent": "9.1.5",
+    "posthog-js": "^1.178.0",
     "prettier-bytes": "1.0.4",
     "prop-types": "15.8.1",
     "react": "^18.3.1",
