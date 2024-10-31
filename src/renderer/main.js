@@ -5,8 +5,6 @@
  *   actually used because auto-prefixing is disabled with
  *   `darkBaseTheme.userAgent = false`. Return a fake object.
  */
-require('dotenv').config();
-
 const Module = require('module');
 const _require = Module.prototype.require;
 Module.prototype.require = function (id) {
@@ -140,7 +138,7 @@ function onState(err, _state) {
   const root = createRoot(container);
 
   const posthogOptions = {
-    api_host: process.env.REACT_APP_PUBLIC_POSTHOG_HOST,
+    api_host: 'https://us.i.posthog.com',
   }
 
   console.log('posthogOptions', posthogOptions);
@@ -148,7 +146,7 @@ function onState(err, _state) {
   root.render(
     <NextUIProvider>
       <PostHogProvider
-        apiKey={process.env.REACT_APP_PUBLIC_POSTHOG_KEY}
+        apiKey={'phc_T5wad1TWciA187DmTuXur4wikGDfFPV6LzEDYXx9Vw'}
         options={posthogOptions}>
         <App initialState={state} onUpdate={handleUpdate} />
       </PostHogProvider>
