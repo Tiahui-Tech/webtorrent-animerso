@@ -134,21 +134,14 @@ const Header = ({ state }) => {
     const handleResize = () => {
       if (win) setIsMaximized(win.isMaximized());
     };
+    const handleFullScreen = () => setIsMaximized(true);
 
     setIsMaximized(win.isMaximized());
 
     win.addListener('maximize', handleMaximize);
     win.addListener('unmaximize', handleUnmaximize);
     win.addListener('resize', handleResize);
-
-    return () => {
-      if (win) {
-        // Remove event listeners
-        win.removeListener('maximize', handleMaximize);
-        win.removeListener('unmaximize', handleUnmaximize);
-        win.removeListener('resize', handleResize);
-      }
-    };
+    eventBus.on('playerFullscreen', handleFullScreen);
   }, []);
 
   useEffect(() => {
@@ -209,14 +202,14 @@ const Header = ({ state }) => {
         historyRef.current.future.unshift(historyRef.current.current);
         historyRef.current.current = prevPage;
         navigate(prevPage);
-        
+
         // Track back navigation
         posthog?.capture('route_changed', {
           from: historyRef.current.current,
           to: prevPage,
           method: 'back_button'
         });
-        
+
         eventBus.emit('historyUpdated');
       }
     }
@@ -270,7 +263,7 @@ const Header = ({ state }) => {
 
   const handleWindowControl = (action) => (e) => {
     e.stopPropagation();
-    
+
     const win = remote.getCurrentWindow();
     if (!win) return;
 
@@ -424,11 +417,11 @@ const Header = ({ state }) => {
                 style={{ WebkitAppRegion: 'no-drag', zIndex: 9999 }}
                 className="p-1 hover:bg-zinc-800 rounded"
               >
-                <Icon 
-                  icon={isMaximized ? "gravity-ui:copy" : "gravity-ui:square"} 
-                  className="pointer-events-none" 
-                  width="26" 
-                  height="26" 
+                <Icon
+                  icon={isMaximized ? "gravity-ui:copy" : "gravity-ui:square"}
+                  className="pointer-events-none"
+                  width="26"
+                  height="26"
                 />
               </button>
               <button
