@@ -1246,13 +1246,11 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
     window.unmaximize();
     window.setFullScreen(false);
     window.setBounds(workAreaSize);
-    eventBus.emit('playerFullscreen');
   }
 
   function enterFullScreen(window) {
     window.maximize();
     window.setFullScreen(true);
-    eventBus.emit('playerFullscreen');
   }
 
   return (

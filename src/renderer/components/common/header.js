@@ -134,14 +134,12 @@ const Header = ({ state }) => {
     const handleResize = () => {
       if (win) setIsMaximized(win.isMaximized());
     };
-    const handleFullScreen = () => setIsMaximized(true);
 
     setIsMaximized(win.isMaximized());
 
     win.addListener('maximize', handleMaximize);
     win.addListener('unmaximize', handleUnmaximize);
     win.addListener('resize', handleResize);
-    eventBus.on('playerFullscreen', handleFullScreen);
   }, []);
 
   useEffect(() => {
