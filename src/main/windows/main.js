@@ -153,6 +153,8 @@ function init(state, options) {
     setInterval(() => {
       if (global.gc) global.gc();
     }, 60000);
+
+    win.webContents.setBackgroundThrottling(false)
   });
 
   // Clean up when window is closed
@@ -160,6 +162,14 @@ function init(state, options) {
     if (global.gc) global.gc();
     win = null;
   });
+
+  win.webContents.on('destroyed', () => {
+    log.info('Main window webContents destroyed')
+    if (rpc) {
+      rpc.destroy()
+      rpc = null
+    }
+  })
 }
 
 function dispatch(...args) {

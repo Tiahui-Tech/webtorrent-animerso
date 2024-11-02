@@ -1,8 +1,9 @@
 console.time('init')
 
 require('@electron/remote/main').initialize()
-const { app, ipcMain, webContents } = require('electron')
+const { app, webContents, BrowserWindow } = require('electron')
 const { autoUpdater } = require('electron-updater')
+const eLog = require('electron-log')
 
 // Start crash reporter early, so it takes effect for child processes
 const crashReporter = require('../crash-reporter')
@@ -16,11 +17,13 @@ const log = require('./log')
 const menu = require('./menu')
 const State = require('../renderer/lib/state')
 const windows = require('./windows')
+const tray = require('./tray')
 
 const WEBTORRENT_VERSION = require('webtorrent/package.json').version
 
 let shouldQuit = false
 let argv = sliceArgv(process.argv)
+eLog.initialize()
 
 app.setAppUserModelId(config.APP_ID)
 
@@ -36,12 +39,6 @@ if (config.IS_PRODUCTION) {
   // When Electron is running in production mode (packaged app), then run React
   // in production mode too.
   process.env.NODE_ENV = 'production'
-}
-
-if (process.platform === 'win32') {
-  const squirrelWin32 = require('./squirrel-win32')
-  shouldQuit = squirrelWin32.handleEvent(argv[0])
-  argv = argv.filter((arg) => !arg.includes('--squirrel'))
 }
 
 if (!shouldQuit && !config.IS_PORTABLE) {
@@ -114,44 +111,54 @@ function init() {
   ipc.init()
 
   app.once('ipcReady', () => {
+    eLog.info('App ipc ready')
     log('Command line args:', argv)
     processArgv(argv)
     console.timeEnd('init')
   })
 
-  app.on('before-quit', e => {
+  app.on('before-quit', async (e) => {
+    if (app.isQuitting) return
+
+    e.preventDefault()
+    eLog.info('App before quit')
     app.isQuitting = true
+
+    if (windows.main.rpc) {
+      eLog.info('Destroying Discord RPC')
+      windows.main.rpc.destroy()
+    }
+
+    eLog.info('Stopping auto updater')
+    autoUpdater.autoDownload = false
+    autoUpdater.autoInstallOnAppQuit = false
+
+    try {
+      autoUpdater.quitAndInstall(false, true)
+    } catch (e) {
+      eLog.info('No updates pending installation')
+    }
+
+    eLog.info('App destroying tray')
     tray.destroy()
 
-    autoUpdater.removeAllListeners()
-    autoUpdater.off('error', log)
-    autoUpdater.off('checking-for-update', log)
-    autoUpdater.off('update-available', log)
-    autoUpdater.off('update-not-available', log)
-    autoUpdater.off('update-downloaded', log)
-
-    windows.main.dispatch('stateSaveImmediate')
-    ipcMain.once('stateSaved', () => app.exit())
     setTimeout(() => {
       webContents.getAllWebContents().forEach(wc => {
         wc.close()
         wc.delete()
       })
     }, 2000)
-  })
 
-  app.on('will-quit', () => {
-    app.exit()
-    process.disconnect()
-    process.exit()
+    addDebugListeners()
   })
 
   app.on('window-all-closed', () => {
-    app.isQuitting = true
+    eLog.info('App window all closed')
     app.quit()
   })
 
   app.on('activate', () => {
+    eLog.info('App activate')
     if (isReady) windows.main.show()
   })
 }
@@ -164,7 +171,6 @@ function delayedInit(state) {
   const updater = require('./updater')
   const FolderWatcher = require('./folder-watcher')
   const folderWatcher = new FolderWatcher({ window: windows.main, state })
-  const tray = require('./tray')
 
   announcement.init()
   dock.init()
