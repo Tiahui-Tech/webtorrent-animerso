@@ -1,7 +1,7 @@
 {
   "name": "animeton",
   "description": "Animeton, the streaming torrent client. For Mac, Windows, and Linux.",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "author": {
     "name": "Tiahui Tech",
     "email": "contact@tiahui.tech",
@@ -174,22 +174,22 @@
       "oneClick": true,
       "perMachine": false,
       "allowToChangeInstallationDirectory": false,
-      "artifactName": "${productName}-SETUP-${version}.${ext}",
+      "artifactName": "${productName}-SETUP-v${version}.${ext}",
       "shortcutName": "${productName}",
       "uninstallDisplayName": "${productName}",
       "deleteAppDataOnUninstall": true,
       "include": "bin/installer.nsh"
     },
     "nsis": {
-      "artifactName": "${productName}-SETUP-${version}.${ext}",
+      "artifactName": "${productName}-SETUP-v${version}.${ext}",
       "shortcutName": "${productName}",
       "uninstallDisplayName": "${productName}"
     },
     "msi": {
-      "artifactName": "${productName}-INSTALLER-${version}.${ext}"
+      "artifactName": "${productName}-INSTALLER-v${version}.${ext}"
     },
     "squirrelWindows": {
-      "artifactName": "${productName}-${version}.${ext}"
+      "artifactName": "${productName}-v${version}.${ext}"
     }
   }
 }

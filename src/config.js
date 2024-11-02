@@ -14,7 +14,7 @@ const PORTABLE_PATH = IS_TEST
 const IS_PRODUCTION = isProduction()
 const IS_PORTABLE = isPortable()
 
-const UI_HEADER_HEIGHT = 38
+const UI_HEADER_HEIGHT = 56
 const UI_TORRENT_HEIGHT = 100
 
 module.exports = {
@@ -24,6 +24,7 @@ module.exports = {
   APP_FILE_ICON: path.join(__dirname, '..', 'static', 'assets', 'animeton_file'),
   APP_ICON: path.join(__dirname, '..', 'static', 'assets', 'animeton'),
   APP_NAME,
+  APP_ID: 'com.tiahui.animeton',
   APP_TEAM,
   APP_VERSION,
   APP_WINDOW_TITLE: APP_NAME,

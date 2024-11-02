@@ -2,6 +2,7 @@ console.time('init')
 
 require('@electron/remote/main').initialize()
 const { app, ipcMain, webContents } = require('electron')
+const { autoUpdater } = require('electron-updater')
 
 // Start crash reporter early, so it takes effect for child processes
 const crashReporter = require('../crash-reporter')
@@ -21,7 +22,7 @@ const WEBTORRENT_VERSION = require('webtorrent/package.json').version
 let shouldQuit = false
 let argv = sliceArgv(process.argv)
 
-app.setAppUserModelId('com.tiahui.animeton')
+app.setAppUserModelId(config.APP_ID)
 
 // allow electron/chromium to play startup sounds (without user interaction)
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
@@ -121,6 +122,14 @@ function init() {
   app.on('before-quit', e => {
     app.isQuitting = true
     tray.destroy()
+
+    autoUpdater.removeAllListeners()
+    autoUpdater.off('error', log)
+    autoUpdater.off('checking-for-update', log)
+    autoUpdater.off('update-available', log)
+    autoUpdater.off('update-not-available', log)
+    autoUpdater.off('update-downloaded', log)
+
     windows.main.dispatch('stateSaveImmediate')
     ipcMain.once('stateSaved', () => app.exit())
     setTimeout(() => {
@@ -132,7 +141,9 @@ function init() {
   })
 
   app.on('will-quit', () => {
-    process.exit(0)
+    app.exit()
+    process.disconnect()
+    process.exit()
   })
 
   app.on('window-all-closed', () => {
@@ -163,11 +174,6 @@ function delayedInit(state) {
   ipc.setModule('folderWatcher', folderWatcher)
   if (folderWatcher.isEnabled()) {
     folderWatcher.start()
-  }
-
-  if (process.platform === 'win32') {
-    const userTasks = require('./user-tasks')
-    userTasks.init()
   }
 }
 
