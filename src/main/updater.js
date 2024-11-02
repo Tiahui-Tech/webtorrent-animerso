@@ -2,49 +2,17 @@ module.exports = {
   init
 }
 
-const { autoUpdater } = require('electron')
-const get = require('simple-get')
+const { autoUpdater } = require('electron-updater')
 
-const config = require('../config')
 const log = require('./log')
 const windows = require('./windows')
 
-const AUTO_UPDATE_URL = config.AUTO_UPDATE_URL
-
 // TODO: Implement auto-updater
-function init () {
-  if (process.platform === 'linux') {
-    // initLinux()
-  } else {
-    initDarwinWin32()
-  }
+function init() {
+  initDarwinWin32()
 }
 
-// The Electron auto-updater does not support Linux yet, so manually check for
-// updates and show the user a modal notification.
-function initLinux () {
-  get.concat(AUTO_UPDATE_URL, onResponse)
-}
-
-function onResponse (err, res, data) {
-  if (err) return log(`Update error: ${err.message}`)
-  if (res.statusCode === 200) {
-    // Update available
-    try {
-      data = JSON.parse(data)
-    } catch (err) {
-      return log(`Update error: Invalid JSON response: ${err.message}`)
-    }
-    windows.main.dispatch('updateAvailable', data.version)
-  } else if (res.statusCode === 204) {
-    // No update available
-  } else {
-    // Unexpected status code
-    log(`Update error: Unexpected status code: ${res.statusCode}`)
-  }
-}
-
-function initDarwinWin32 () {
+function initDarwinWin32() {
   autoUpdater.on(
     'error',
     (err) => log.error(`Update error: ${err.message}`)
@@ -69,12 +37,11 @@ function initDarwinWin32 () {
 
   autoUpdater.on(
     'update-downloaded',
-    (e, notes, name, date, url) => {
-      log(`Update downloaded: ${name}: ${url}`)
+    (e) => {
+      log('Update downloaded:', e)
       windows.main.dispatch('updateDownloaded')
     }
   )
 
-  autoUpdater.setFeedURL({ url: AUTO_UPDATE_URL })
   autoUpdater.checkForUpdates()
 }

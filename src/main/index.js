@@ -1,7 +1,7 @@
 console.time('init')
 
 require('@electron/remote/main').initialize()
-const { app, ipcMain } = require('electron')
+const { app, ipcMain, webContents } = require('electron')
 
 // Start crash reporter early, so it takes effect for child processes
 const crashReporter = require('../crash-reporter')
@@ -20,6 +20,8 @@ const WEBTORRENT_VERSION = require('webtorrent/package.json').version
 
 let shouldQuit = false
 let argv = sliceArgv(process.argv)
+
+app.setAppUserModelId('com.tiahui.animeton')
 
 // allow electron/chromium to play startup sounds (without user interaction)
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
@@ -57,13 +59,11 @@ if (shouldQuit) {
   init()
 }
 
-function init () {
+function init() {
   app.on('second-instance', (event, commandLine, workingDirectory) => onAppOpen(commandLine))
   if (config.IS_PORTABLE) {
     const path = require('path')
-    // Put all user data into the "Portable Settings" folder
     app.setPath('userData', config.CONFIG_PATH)
-    // Put Electron crash files, etc. into the "Portable Settings\Temp" folder
     app.setPath('temp', path.join(config.CONFIG_PATH, 'Temp'))
   }
 
@@ -76,7 +76,7 @@ function init () {
     state: (cb) => State.load(cb)
   }, onReady)
 
-  function onReady (err, results) {
+  function onReady(err, results) {
     if (err) throw err
 
     isReady = true
@@ -119,16 +119,25 @@ function init () {
   })
 
   app.on('before-quit', e => {
-    if (app.isQuitting) return
-
     app.isQuitting = true
-    e.preventDefault()
-    windows.main.dispatch('stateSaveImmediate') // try to save state on exit
-    ipcMain.once('stateSaved', () => app.quit())
+    tray.destroy()
+    windows.main.dispatch('stateSaveImmediate')
+    ipcMain.once('stateSaved', () => app.exit())
     setTimeout(() => {
-      console.error('Saving state took too long. Quitting.')
-      app.quit()
-    }, 4000) // quit after 4 secs, at most
+      webContents.getAllWebContents().forEach(wc => {
+        wc.close()
+        wc.delete()
+      })
+    }, 2000)
+  })
+
+  app.on('will-quit', () => {
+    process.exit(0)
+  })
+
+  app.on('window-all-closed', () => {
+    app.isQuitting = true
+    app.quit()
   })
 
   app.on('activate', () => {
@@ -136,7 +145,7 @@ function init () {
   })
 }
 
-function delayedInit (state) {
+function delayedInit(state) {
   if (app.isQuitting) return
 
   const announcement = require('./announcement')
@@ -144,10 +153,12 @@ function delayedInit (state) {
   const updater = require('./updater')
   const FolderWatcher = require('./folder-watcher')
   const folderWatcher = new FolderWatcher({ window: windows.main, state })
+  const tray = require('./tray')
 
   announcement.init()
   dock.init()
   updater.init()
+  tray.init()
 
   ipc.setModule('folderWatcher', folderWatcher)
   if (folderWatcher.isEnabled()) {
@@ -158,14 +169,9 @@ function delayedInit (state) {
     const userTasks = require('./user-tasks')
     userTasks.init()
   }
-
-  if (process.platform !== 'darwin') {
-    const tray = require('./tray')
-    tray.init()
-  }
 }
 
-function onOpen (e, torrentId) {
+function onOpen(e, torrentId) {
   e.preventDefault()
 
   if (app.ipcReady) {
@@ -180,7 +186,7 @@ function onOpen (e, torrentId) {
   }
 }
 
-function onAppOpen (newArgv) {
+function onAppOpen(newArgv) {
   newArgv = sliceArgv(newArgv)
 
   if (app.ipcReady) {
@@ -197,7 +203,7 @@ function onAppOpen (newArgv) {
 // Production: 1 arg, eg: /Applications/WebTorrent.app/Contents/MacOS/WebTorrent
 // Development: 2 args, eg: electron .
 // Test: 4 args, eg: electron -r .../mocks.js .
-function sliceArgv (argv) {
+function sliceArgv(argv) {
   return argv.slice(
     config.IS_PRODUCTION
       ? 1
@@ -207,11 +213,10 @@ function sliceArgv (argv) {
   )
 }
 
-function processArgv (argv) {
+function processArgv(argv) {
   const torrentIds = []
   argv.forEach(arg => {
     if (arg === '-n' || arg === '-o' || arg === '-u') {
-      // Critical path: Only load the 'dialog' package if it is needed
       const dialog = require('./dialog')
       if (arg === '-n') {
         dialog.openSeedDirectory()

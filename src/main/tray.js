@@ -1,7 +1,8 @@
 module.exports = {
   hasTray,
   init,
-  setWindowFocus
+  setWindowFocus,
+  destroy
 }
 
 const { app, Tray, Menu } = require('electron')
@@ -70,6 +71,13 @@ function createTray () {
 function updateTrayMenu () {
   const contextMenu = Menu.buildFromTemplate(getMenuTemplate())
   tray.setContextMenu(contextMenu)
+}
+
+function destroy () {
+  if (tray) {
+    tray.destroy()
+    tray = null
+  }
 }
 
 function getMenuTemplate () {

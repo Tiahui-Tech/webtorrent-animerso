@@ -16,7 +16,8 @@ const main = module.exports = {
   updateDiscordRPC
 }
 
-const { app, BrowserWindow, screen, ipcMain, autoUpdater } = require('electron')
+const { app, BrowserWindow, screen, ipcMain } = require('electron')
+const { autoUpdater } = require('electron-updater')
 const debounce = require('debounce')
 const DiscordRPC = require('discord-rpc')
 
@@ -125,10 +126,9 @@ function init(state, options) {
   }, 1000))
 
   win.on('close', e => {
-    if (process.platform !== 'darwin') {
-      if (rpc) rpc.destroy()
-      return app.quit()
-    }
+    if (rpc) rpc.destroy()
+    app.quit()
+
     if (!app.isQuitting) {
       e.preventDefault()
       hide()
@@ -148,7 +148,7 @@ function init(state, options) {
   win.webContents.on('did-finish-load', () => {
     // Set memory limits
     app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512');
-    
+
     // Periodically clean up memory
     setInterval(() => {
       if (global.gc) global.gc();
@@ -168,8 +168,7 @@ function dispatch(...args) {
 
 function hide() {
   if (!main.win) return
-  dispatch('backToList')
-  main.win.hide()
+  app.quit()
 }
 
 function send(...args) {
