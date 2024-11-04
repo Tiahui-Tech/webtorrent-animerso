@@ -27,6 +27,7 @@ function getCurrentPath() {
 }
 
 const UpdateDownloadedModal = require('../components/common/modal/update-downloaded-modal')
+const ClosedBetaModal = require('../components/common/modal/closed-beta-modal')
 
 function App({ initialState, onUpdate }) {
   return (
@@ -39,13 +40,26 @@ function App({ initialState, onUpdate }) {
 function AppContent({ initialState, onUpdate }) {
   const [state, setState] = useState(initialState);
   const [currentTorrent, setCurrentTorrent] = useState(null);
+
   const [updateDownloadedModalOpen, setUpdateDownloadedModalOpen] = useState(false);
+  const [closedBetaModalOpen, setClosedBetaModalOpen] = useState(false);
+
   const location = useLocation();
   const navigate = useNavigate();
   const posthog = usePostHog();
   
   const stateRef = useRef(state);
   stateRef.current = state;
+
+  // Show closed beta modal 
+  useEffect(() => {
+    if (!state.saved?.modals?.closedBeta) {
+      setClosedBetaModalOpen(true);
+      dispatch('modalUpdate', {
+        closedBeta: true
+      });
+    }
+  }, []);
 
   // Garbage collector and memory cleanup
   useEffect(() => {
@@ -64,7 +78,7 @@ function AppContent({ initialState, onUpdate }) {
     };
   }, [location.pathname]);
 
-  // Page views
+  // Page views and event listeners
   useEffect(() => {
     currentPath = location.pathname;
     posthog?.capture('page_view', {
@@ -98,6 +112,12 @@ function AppContent({ initialState, onUpdate }) {
     eventBus.on('updateDownloaded', () => {
       setUpdateDownloadedModalOpen(true);
       posthog?.capture('update_downloaded');
+    });
+
+    eventBus.on('modalOpen', (modalId) => {
+      if (modalId === 'closedBeta') {
+        setClosedBetaModalOpen(true);
+      }
     });
 
   }, [navigate, location, posthog]);
@@ -159,6 +179,7 @@ function AppContent({ initialState, onUpdate }) {
           </React.Suspense>
         </div>
         <UpdateDownloadedModal isOpen={updateDownloadedModalOpen} setIsOpen={setUpdateDownloadedModalOpen} />
+        <ClosedBetaModal isOpen={closedBetaModalOpen} setIsOpen={setClosedBetaModalOpen} />
       </div>
     </main>
   );

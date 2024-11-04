@@ -9,6 +9,7 @@ const prettyBytes = require('prettier-bytes');
 const { useLocation, useNavigate } = require('react-router-dom');
 const { AnimatePresence, motion } = require('framer-motion');
 const useCanvasRpcFrame = require('../hooks/useCanvasRpcFrame');
+const useApiSubtitles = require('../hooks/useApiSubtitles');
 
 const TorrentSummary = require('../lib/torrent-summary');
 const Playlist = require('../lib/playlist');
@@ -25,6 +26,7 @@ const { anitomyscript } = require('../../modules/anime');
 function Player({ state, currentTorrent }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { fetchSubtitles, subtitles: apiSubtitles, isLoading: isFetchingSubtitles } = useApiSubtitles(currentTorrent?.infoHash);
   const [isMouseMoving, setIsMouseMoving] = useState(true);
   const [localSubtitles, setLocalSubtitles] = useState({ infoHash: null, tracks: [] });
   const [lastAction, setLastAction] = useState(null);
@@ -58,6 +60,38 @@ function Player({ state, currentTorrent }) {
       setIsMouseMoving(false);
     }, 3000); // Set to 0 after 3 seconds of inactivity
   };
+
+  useEffect(() => {
+    const fetchAndSetSubtitles = async () => {
+      if (!currentTorrent || subtitlesFound) return;
+
+      await fetchSubtitles();
+    };
+
+    fetchAndSetSubtitles();
+  }, [currentTorrent]);
+
+  useEffect(() => {
+    if (!apiSubtitles || isFetchingSubtitles || subtitlesFound) return;
+
+    const filteredSubtitles = localSubtitles.tracks.filter(track =>
+      track.label !== 'Español Latino'
+    );
+
+    sendNotification(state, {
+      title: 'Subtítulos',
+      message: 'Se encontraron subtítulos de la API, agregando...',
+      type: 'debug'
+    });
+
+    console.log('apiSubtitles', apiSubtitles);
+
+    setLocalSubtitles({
+      infoHash: currentTorrent.infoHash,
+      tracks: [apiSubtitles, ...filteredSubtitles]
+    });
+    setSubtitlesFound(true);
+  }, [apiSubtitles, isFetchingSubtitles]);
 
   // Discord RPC
   useEffect(() => {
@@ -189,7 +223,13 @@ function Player({ state, currentTorrent }) {
           sendNotification(state, { title: 'Subtítulos', message: `Se han encontrado subtítulos con un tamaño total de ${subsLength}.`, type: 'debug' })
         }
         setSubtitlesFound(true);
-        setLocalSubtitles({ infoHash, tracks });
+
+        console.log('tracks', tracks)
+
+        const filteredTracks = apiSubtitles ? tracks.filter(track => track.label !== 'Español Latino') : tracks
+        const apiSubtitlesTrack = apiSubtitles ? [apiSubtitles] : []
+
+        setLocalSubtitles({ infoHash, tracks: [...apiSubtitlesTrack, ...filteredTracks] });
       } else {
         sendNotification(state, { title: 'Subtítulos', message: `No se han encontrado subtítulos.`, type: 'debug' })
       }
