@@ -60,7 +60,7 @@ const Header = ({ state }) => {
     const discordUser = userData?.discord;
 
     if (discordUser && !identifySentRef.current) {
-      posthog.identify(`${discordUser.username}-${discordUser.id}`, {
+      posthog?.identify(`${discordUser.username}-${discordUser.id}`, {
         appKey,
       });
       identifySentRef.current = true;
@@ -71,6 +71,14 @@ const Header = ({ state }) => {
     const currentPath = location.pathname;
     const isCurrentPlayer = isPlayerRoute(currentPath);
     const wasPreviousPlayer = isPlayerRoute(historyRef.current.current);
+
+    // Send special event when leaving player route
+    if (wasPreviousPlayer && !isCurrentPlayer) {
+      posthog?.capture('exit_player', {
+        from: '/player',
+        to: currentPath
+      });
+    }
 
     // Only update history if:
     // 1. It's a new route different from the current one
@@ -87,7 +95,7 @@ const Header = ({ state }) => {
       }
 
       // Track route change
-      posthog.capture('route_changed', {
+      posthog?.capture('route_changed', {
         from: historyRef.current.past[historyRef.current.past.length - 1] || null,
         to: currentPath,
         method: 'navigation'
@@ -132,15 +140,6 @@ const Header = ({ state }) => {
     win.addListener('maximize', handleMaximize);
     win.addListener('unmaximize', handleUnmaximize);
     win.addListener('resize', handleResize);
-
-    return () => {
-      if (win) {
-        // Remove event listeners
-        win.removeListener('maximize', handleMaximize);
-        win.removeListener('unmaximize', handleUnmaximize);
-        win.removeListener('resize', handleResize);
-      }
-    };
   }, []);
 
   useEffect(() => {
@@ -201,14 +200,14 @@ const Header = ({ state }) => {
         historyRef.current.future.unshift(historyRef.current.current);
         historyRef.current.current = prevPage;
         navigate(prevPage);
-        
+
         // Track back navigation
-        posthog.capture('route_changed', {
+        posthog?.capture('route_changed', {
           from: historyRef.current.current,
           to: prevPage,
           method: 'back_button'
         });
-        
+
         eventBus.emit('historyUpdated');
       }
     }
@@ -229,7 +228,7 @@ const Header = ({ state }) => {
         navigate(nextPage);
 
         // Track forward navigation
-        posthog.capture('route_changed', {
+        posthog?.capture('route_changed', {
           from: historyRef.current.past[historyRef.current.past.length - 1],
           to: nextPage,
           method: 'forward_button'
@@ -262,7 +261,7 @@ const Header = ({ state }) => {
 
   const handleWindowControl = (action) => (e) => {
     e.stopPropagation();
-    
+
     const win = remote.getCurrentWindow();
     if (!win) return;
 
@@ -416,11 +415,11 @@ const Header = ({ state }) => {
                 style={{ WebkitAppRegion: 'no-drag', zIndex: 9999 }}
                 className="p-1 hover:bg-zinc-800 rounded"
               >
-                <Icon 
-                  icon={isMaximized ? "gravity-ui:copy" : "gravity-ui:square"} 
-                  className="pointer-events-none" 
-                  width="26" 
-                  height="26" 
+                <Icon
+                  icon={isMaximized ? "gravity-ui:copy" : "gravity-ui:square"}
+                  className="pointer-events-none"
+                  width="26"
+                  height="26"
                 />
               </button>
               <button

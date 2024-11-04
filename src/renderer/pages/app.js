@@ -47,10 +47,27 @@ function AppContent({ initialState, onUpdate }) {
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  // Track page views
+  // Garbage collector and memory cleanup
+  useEffect(() => {
+    const cleanup = () => {
+      if (global.gc) global.gc();
+      
+      if (window.performance && window.performance.memory) {
+        window.performance.memory.usedJSHeapSize = 0;
+      }
+    };
+
+    cleanup();
+    
+    return () => {
+      cleanup();
+    };
+  }, [location.pathname]);
+
+  // Page views
   useEffect(() => {
     currentPath = location.pathname;
-    posthog.capture('page_view', {
+    posthog?.capture('page_view', {
       path: location.pathname
     });
 
@@ -71,25 +88,24 @@ function AppContent({ initialState, onUpdate }) {
       console.log('torrentUpdateHandler', torrentSummary);
       setCurrentTorrent(torrentSummary);
       // Track torrent updates
-      posthog.capture('torrent_update', {
+      posthog?.capture('torrent_update', {
         infoHash: torrentSummary.infoHash,
-        name: torrentSummary.name,
-        progress: torrentSummary.progress
+        name: torrentSummary.name
       });
     };
     eventBus.on('torrentUpdate', torrentUpdateHandler);
 
     eventBus.on('updateDownloaded', () => {
       setUpdateDownloadedModalOpen(true);
-      posthog.capture('update_downloaded');
+      posthog?.capture('update_downloaded');
     });
 
   }, [navigate, location, posthog]);
 
-  // Track torrent cleanup on startup
+  // Torrent cleanup on startup
   useEffect(() => {
     const savedTorrents = state.saved.torrents;
-    posthog.capture('cleanup_torrents', {
+    posthog?.capture('cleanup_torrents', {
       count: savedTorrents.length
     });
 

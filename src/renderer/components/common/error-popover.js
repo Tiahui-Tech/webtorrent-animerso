@@ -1,5 +1,5 @@
 const React = require('react');
-const { useEffect } = require('react');
+const { useEffect, useRef } = require('react');
 const { motion } = require('framer-motion');
 const { Icon } = require('@iconify/react');
 const { usePostHog } = require('posthog-js/react');
@@ -10,6 +10,25 @@ const ErrorPopover = ({ state }) => {
     const recentErrors = state.errors.filter((x) => now - x.time < 5000);
     const hasErrors = recentErrors.length > 0;
 
+    const lastSentErrorRef = useRef(null);
+
+    useEffect(() => {
+        if (!recentErrors.length) return;
+        
+        const latestError = recentErrors[recentErrors.length - 1];
+        if (
+            latestError.type !== 'debug' && 
+            (!lastSentErrorRef.current || 
+             (lastSentErrorRef.current.time !== latestError.time && 
+              lastSentErrorRef.current.message !== latestError.message))
+        ) {
+            posthog?.capture('error_popover', {
+                error: latestError,
+            });
+            lastSentErrorRef.current = latestError;
+        }
+    }, [recentErrors]);
+
     if (!hasErrors) return null;
 
     const errorColors = {
@@ -17,12 +36,6 @@ const ErrorPopover = ({ state }) => {
         alert: '#ff961f',
         debug: '#336ecc'
     };
-
-    useEffect(() => {
-        posthog.capture('error_popover', {
-            errors: recentErrors,
-        });
-    }, [recentErrors]);
 
     return (
         <div

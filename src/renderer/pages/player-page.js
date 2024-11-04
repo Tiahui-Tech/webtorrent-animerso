@@ -1216,32 +1216,40 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
   }
 
   function handleFullScreen() {
-    const currentWindow = remote.getCurrentWindow();
+    const currentWindow = remote.getCurrentWindow()
     const currentScreen = remote.screen.getDisplayMatching(currentWindow.getBounds());
     const workAreaSize = currentScreen.workAreaSize;
     const currentSize = currentWindow.getSize();
 
-
-    const isMaximizedInSize = currentSize[0] === workAreaSize.width &&
+    const isFullScreenInSize = currentSize[0] === workAreaSize.width &&
+      currentSize[1] > workAreaSize.height;
+    const isMaximized = currentSize[0] === workAreaSize.width &&
       currentSize[1] === workAreaSize.height;
 
-    const isCurrentlyFullScreen = isMaximizedInSize || currentWindow.isMaximized() || state.window.isVideoFullScreen;
+    // Debug logs to hunt user bugs
+    console.log('handleFullScreen workAreaSize', workAreaSize.width, workAreaSize.height);
+    console.log('handleFullScreen currentSize', currentSize[0], currentSize[1]);
+    console.log('handleFullScreen isFullScreenInSize', isFullScreenInSize);
+    console.log('handleFullScreen isMaximized', isMaximized);
+    console.log('handleFullScreen state.window.isVideoFullScreen', state.window.isVideoFullScreen);
 
-    if (isCurrentlyFullScreen) {
-      exitFullScreen(currentWindow);
+    if (isFullScreenInSize) {
+      exitFullScreen(currentWindow, workAreaSize);
     } else {
       enterFullScreen(currentWindow);
     }
 
-    state.window.isVideoFullScreen = !isCurrentlyFullScreen;
+    state.window.isVideoFullScreen = !isFullScreenInSize;
   }
 
-  function exitFullScreen(window) {
+  function exitFullScreen(window, workAreaSize) {
     window.unmaximize();
     window.setFullScreen(false);
+    window.setBounds(workAreaSize);
   }
 
   function enterFullScreen(window) {
+    window.maximize();
     window.setFullScreen(true);
   }
 
