@@ -1,7 +1,7 @@
 console.time('init')
 
 require('@electron/remote/main').initialize()
-const { app, webContents, BrowserWindow } = require('electron')
+const { app, webContents } = require('electron')
 const { autoUpdater } = require('electron-updater')
 const eLog = require('electron-log')
 
