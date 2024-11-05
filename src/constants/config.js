@@ -1,5 +1,7 @@
 const API_BASE_URL = 'https://dev-api.animeton.com'
 
+const DISCORD_INVITE_CODE = 'fYNNmKJJfk'
+
 const DEFAULTS = {
   volume: 1,
   playerAutoplay: true,
@@ -41,4 +43,4 @@ const TIME_UNITS = [
   { key: 'dia', limit: 2592000, divisor: 86400 }
 ];
 
-module.exports = { API_BASE_URL, DEFAULTS, TIME_UNITS };
+module.exports = { API_BASE_URL, DEFAULTS, TIME_UNITS, DISCORD_INVITE_CODE };

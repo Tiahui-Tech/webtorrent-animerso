@@ -4,6 +4,7 @@ const { Divider } = require('@nextui-org/react');
 const { Icon } = require('@iconify/react');
 const { dispatch } = require('../../lib/dispatcher');
 const { shell } = require('electron');
+const { DISCORD_INVITE_CODE } = require('../../../constants/config');
 
 const useActivateKey = require('../../hooks/useActivateKey');
 
@@ -67,7 +68,7 @@ const Activation = ({ isValid }) => {
                 <p className="text-white text-lg mb-4">Únete a nuestro Discord y consigue una</p>
                 <button
                     className="flex items-center justify-center bg-[#5865F2] text-white px-6 py-2 rounded-full hover:bg-opacity-80 transition-all duration-300"
-                    onClick={() => shell.openExternal('https://discord.gg/fYNNmKJJfk')}
+                    onClick={() => shell.openExternal(`discord://-/invite/${DISCORD_INVITE_CODE}`)}
                 >
                     <Icon icon="ic:baseline-discord" className="pointer-events-none mr-2" width="26" height="26" style={{ color: 'white' }} />
                     <p className="text-white text-lg font-bold">Animeton</p>
