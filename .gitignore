@@ -4,6 +4,7 @@ dist/
 npm-debug.log*
 .vscode/
 .env
+bin/CodeSignTool
 
 # JetBrains IntelliJ IDEA project files
 .idea
