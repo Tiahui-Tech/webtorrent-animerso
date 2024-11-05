@@ -6,7 +6,7 @@ const {
   useLocation,
 } = require('react-router-dom');
 
-const { ipcRenderer } = require('electron');
+const { ipcRenderer, shell } = require('electron');
 const remote = require('@electron/remote')
 const eventBus = require('../../lib/event-bus');
 const { debounce } = require('../../../modules/utils');
@@ -319,6 +319,19 @@ const Header = ({ state }) => {
             {/* Navigate Buttons */}
             <div className="flex flex-row items-center">
               <button
+                onClick={handleHome}
+                disabled={!canGoHome}
+                className={`focus:outline-none p-1 hover:bg-zinc-800 rounded ${canGoHome ? 'cursor-pointer' : 'cursor-default'}`}
+                style={{ WebkitAppRegion: 'no-drag', zIndex: 9999 }}
+              >
+                <Icon
+                  icon="gravity-ui:house"
+                  width="28"
+                  height="28"
+                  className={`pointer-events-none ${canGoHome ? 'text-white' : 'text-gray-500'}`}
+                />
+              </button>
+              <button
                 onClick={handleBack}
                 disabled={!canGoBack}
                 className={`focus:outline-none p-1 hover:bg-zinc-800 rounded ${canGoBack ? 'cursor-pointer' : 'cursor-default'}`}
@@ -346,6 +359,8 @@ const Header = ({ state }) => {
               </button>
             </div>
 
+            <Divider orientation="vertical" className="bg-zinc-800 h-6 mr-1" />
+
             {/* Search Input */}
             {(isHome && appIsActivated && !appIsBlocked) && (
               <SearchInput
@@ -359,9 +374,9 @@ const Header = ({ state }) => {
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <div className="flex flex-col items-center" style={{ WebkitAppRegion: 'no-drag', zIndex: 9999 }}>
               <p onClick={handleHome} className="text-white font-bold text-2xl leading-none" style={{ cursor: canGoHome ? 'pointer' : 'default' }}>Animeton</p>
-              <span 
-                onClick={isPlayerRoute(location.pathname) ? handleHome : handleClosedBeta} 
-                className="text-zinc-400 text-xs mt-1 leading-none" 
+              <span
+                onClick={isPlayerRoute(location.pathname) ? handleHome : handleClosedBeta}
+                className="text-zinc-400 text-xs mt-1 leading-none"
                 style={{ cursor: 'pointer' }}
               >
                 {`Beta cerrada (${appVersion})`}
@@ -409,6 +424,8 @@ const Header = ({ state }) => {
                 )}
               </div>
             )}
+
+            <Divider orientation="vertical" className="bg-zinc-800 h-6" />
 
             {/* Window Controls */}
             <div className="flex flex-row items-center gap-1">

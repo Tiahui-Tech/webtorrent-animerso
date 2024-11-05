@@ -11,6 +11,11 @@ const { usePostHog } = require('posthog-js/react');
 
 const Header = require('../components/common/header');
 const ErrorPopover = require('../components/common/error-popover');
+const HelpButton = require('../components/common/help-button')
+
+const UpdateDownloadedModal = require('../components/common/modal/update-downloaded-modal')
+const ClosedBetaModal = require('../components/common/modal/closed-beta-modal')
+const DiscordTicketModal = require('../components/common/modal/discord-ticket-modal')
 
 // Perf optimization: Needed immediately, so do not lazy load it
 const Home = require('./Home');
@@ -26,9 +31,6 @@ function getCurrentPath() {
   return currentPath;
 }
 
-const UpdateDownloadedModal = require('../components/common/modal/update-downloaded-modal')
-const ClosedBetaModal = require('../components/common/modal/closed-beta-modal')
-
 function App({ initialState, onUpdate }) {
   return (
     <MemoryRouter>
@@ -43,6 +45,7 @@ function AppContent({ initialState, onUpdate }) {
 
   const [updateDownloadedModalOpen, setUpdateDownloadedModalOpen] = useState(false);
   const [closedBetaModalOpen, setClosedBetaModalOpen] = useState(false);
+  const [discordTicketModalOpen, setDiscordTicketModalOpen] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -115,8 +118,13 @@ function AppContent({ initialState, onUpdate }) {
     });
 
     eventBus.on('modalOpen', (modalId) => {
-      if (modalId === 'closedBeta') {
-        setClosedBetaModalOpen(true);
+      switch (modalId) {
+        case 'closedBeta':
+          setClosedBetaModalOpen(true);
+          break;
+        case 'discordTicket':
+          setDiscordTicketModalOpen(true);
+          break;
       }
     });
 
@@ -158,6 +166,7 @@ function AppContent({ initialState, onUpdate }) {
         className={`dark text-foreground bg-background min-h-screen overflow-y-auto ${cls.join(' ')}`}
       >
         <Header state={state} />
+        <HelpButton isModalOpen={discordTicketModalOpen} />
         <ErrorPopover state={state} />
         <div
           key="content"
@@ -180,6 +189,7 @@ function AppContent({ initialState, onUpdate }) {
         </div>
         <UpdateDownloadedModal isOpen={updateDownloadedModalOpen} setIsOpen={setUpdateDownloadedModalOpen} />
         <ClosedBetaModal isOpen={closedBetaModalOpen} setIsOpen={setClosedBetaModalOpen} />
+        <DiscordTicketModal isOpen={discordTicketModalOpen} setIsOpen={setDiscordTicketModalOpen} userId={state.saved.activation?.discordId} />
       </div>
     </main>
   );

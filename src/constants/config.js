@@ -1,6 +1,8 @@
-const API_BASE_URL = 'https://dev-api.animeton.com'
+const API_BASE_URL = 'http://localhost:3000'
 
 const DISCORD_INVITE_CODE = 'fYNNmKJJfk'
+
+const ANIMETON_GUILD_ID = '1247689458879299625'
 
 const DEFAULTS = {
   volume: 1,
@@ -43,4 +45,4 @@ const TIME_UNITS = [
   { key: 'dia', limit: 2592000, divisor: 86400 }
 ];
 
-module.exports = { API_BASE_URL, DEFAULTS, TIME_UNITS, DISCORD_INVITE_CODE };
+module.exports = { API_BASE_URL, DEFAULTS, TIME_UNITS, DISCORD_INVITE_CODE, ANIMETON_GUILD_ID };
