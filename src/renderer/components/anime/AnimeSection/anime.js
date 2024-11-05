@@ -24,7 +24,7 @@ const AnimeCard = React.memo(({ anime, state, glassStyle }) => {
 
   return (
     <Card
-      className="max-w-52 transition duration-300 ease-in-out hover:scale-105 rounded-md border border-zinc-800"
+      className="max-w-52 transition duration-300 ease-in-out hover:scale-105 rounded-md border-0 bg-transparent hover:bg-zinc-900"
       style={glassStyle ?? {}}
       isPressable
       onPress={() => handleAnimeClick(anime)}
@@ -50,6 +50,7 @@ const AnimeCard = React.memo(({ anime, state, glassStyle }) => {
         <div className="flex flex-row absolute top-2 right-2 z-10">
           <Chip
             variant="shadow"
+            size="sm"
             startContent={<Icon icon="gravity-ui:circle-fill" />}
             color={`${STATUS_COLORS[anime.status]}`}
           >
@@ -58,7 +59,7 @@ const AnimeCard = React.memo(({ anime, state, glassStyle }) => {
         </div>
       </CardBody>
       <CardHeader className="flex flex-col items-start p-3">
-        <p className="text-base font-medium truncate w-full">
+        <p className="text-sm font-medium line-clamp-2 w-full">
           {anime.title.romaji}
         </p>
         <div className="flex justify-between items-center w-full mt-2">
