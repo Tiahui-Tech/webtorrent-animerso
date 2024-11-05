@@ -359,7 +359,13 @@ const Header = ({ state }) => {
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <div className="flex flex-col items-center" style={{ WebkitAppRegion: 'no-drag', zIndex: 9999 }}>
               <p onClick={handleHome} className="text-white font-bold text-2xl leading-none" style={{ cursor: canGoHome ? 'pointer' : 'default' }}>Animeton</p>
-              <span onClick={handleClosedBeta} className="text-zinc-400 text-xs mt-1 leading-none" style={{ cursor: 'pointer' }}>{`Beta cerrada (${appVersion})`}</span>
+              <span 
+                onClick={isPlayerRoute(location.pathname) ? handleHome : handleClosedBeta} 
+                className="text-zinc-400 text-xs mt-1 leading-none" 
+                style={{ cursor: 'pointer' }}
+              >
+                {`Beta cerrada (${appVersion})`}
+              </span>
             </div>
           </div>
 
