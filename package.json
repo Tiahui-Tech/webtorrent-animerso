@@ -1,7 +1,7 @@
 {
   "name": "animeton",
   "description": "Animeton, the streaming torrent client. For Mac, Windows, and Linux.",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "author": {
     "name": "Tiahui Tech",
     "email": "contact@tiahui.tech",
@@ -49,6 +49,8 @@
     "discord-rpc": "^4.0.1",
     "dlnacasts": "0.1.0",
     "drag-drop": "7.2.0",
+    "electron-log": "^5.2.0",
+    "electron-updater": "^6.3.9",
     "es6-error": "4.1.1",
     "extract-colors": "^4.0.6",
     "fast-levenshtein": "^3.0.0",
@@ -85,11 +87,8 @@
     "@babel/plugin-transform-react-jsx": "7.24.7",
     "cross-zip": "4.0.0",
     "depcheck": "1.4.7",
-    "electron": "^31.3.1",
-    "electron-notarize": "1.2.2",
-    "electron-osx-sign": "0.6.0",
-    "electron-packager": "17.1.2",
-    "electron-winstaller": "5.3.1",
+    "electron": "^33.0.2",
+    "electron-builder": "^24.13.3",
     "gh-release": "7.0.2",
     "minimist": "1.2.8",
     "nodemon": "2.0.22",
@@ -115,17 +114,16 @@
     "animeton"
   ],
   "license": "MIT",
-  "main": "index.js",
+  "main": "build/main/index.js",
   "optionalDependencies": {
-    "appdmg": "^0.6.0",
-    "electron-installer-debian": "^3.2.0",
-    "electron-installer-redhat": "^3.4.0"
+    "appdmg": "^0.6.0"
   },
   "private": true,
+  "appId": "com.tiahui.animeton",
   "productName": "Animeton",
   "repository": {
     "type": "git",
-    "url": "git://github.com/Tiahui-Tech/webtorrent-animerso.git"
+    "url": "git://github.com/Tiahui-Tech/webtorrent-animeton.git"
   },
   "scripts": {
     "build": "babel src --out-dir build",
@@ -138,9 +136,61 @@
     "test": "standard && depcheck --ignores=standard,@babel/eslint-parser --ignore-dirs=build,dist",
     "test-integration": "npm run build && node ./test",
     "update-authors": "./bin/update-authors.sh",
-    "watch": "nodemon --exec \"tailwindcss -i ./static/input.css -o ./static/main.css && npm run start\" --ext js,css --ignore build/ --ignore dist/"
+    "watch": "nodemon --exec \"tailwindcss -i ./static/input.css -o ./static/main.css && npm run start\" --ext js,css --ignore build/ --ignore dist/",
+    "pack": "electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "release": "electron-builder --publish always"
   },
   "standard": {
     "parser": "@babel/eslint-parser"
+  },
+  "build": {
+    "appId": "com.tiahui.animeton",
+    "productName": "Animeton",
+    "icon": "static/assets/animeton.ico",
+    "copyright": "Copyright © 2024 Tiahui Tech",
+    "files": [
+      "build/**/*",
+      "static/**/*",
+      "node_modules/**/*"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "Tiahui-Tech",
+      "repo": "webtorrent-animeton"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis-web"
+        }
+      ],
+      "icon": "static/assets/animeton.ico"
+    },
+    "nsisWeb": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "artifactName": "${productName}-SETUP-v${version}.${ext}",
+      "shortcutName": "${productName}",
+      "uninstallDisplayName": "${productName}",
+      "deleteAppDataOnUninstall": true,
+      "include": "bin/installer.nsh"
+    },
+    "nsis": {
+      "artifactName": "${productName}-SETUP-v${version}.${ext}",
+      "shortcutName": "${productName}",
+      "uninstallDisplayName": "${productName}"
+    },
+    "msi": {
+      "artifactName": "${productName}-INSTALLER-v${version}.${ext}"
+    },
+    "squirrelWindows": {
+      "artifactName": "${productName}-v${version}.${ext}"
+    }
   }
 }

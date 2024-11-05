@@ -3,7 +3,8 @@ const webtorrent = module.exports = {
   send,
   show,
   toggleDevTools,
-  win: null
+  win: null,
+  destroy
 }
 
 const { app, BrowserWindow } = require('electron')
@@ -39,11 +40,10 @@ function init () {
 
   // Prevent killing the WebTorrent process
   win.on('close', e => {
-    if (app.isQuitting) {
-      return
+    if (!app.isQuitting) {
+      e.preventDefault()
+      win.hide()
     }
-    e.preventDefault()
-    win.hide()
   })
 }
 
@@ -65,4 +65,10 @@ function toggleDevTools () {
   } else {
     webtorrent.win.webContents.openDevTools({ mode: 'detach' })
   }
+}
+
+function destroy() {
+  if (!webtorrent.win) return
+  webtorrent.win.destroy()
+  webtorrent.win = null
 }
