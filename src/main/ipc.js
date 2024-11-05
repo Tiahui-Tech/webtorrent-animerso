@@ -4,6 +4,7 @@ module.exports = {
 }
 
 const { app, ipcMain } = require('electron')
+const eLog = require('electron-log')
 
 const log = require('./log')
 const menu = require('./menu')
@@ -34,6 +35,12 @@ function init() {
       windows.webtorrent.send(message.name, ...message.args)
       log('webtorrent: sent queued %s', message.name)
     })
+  })
+
+  ipcMain.on('relaunch-app', (e, error) => {
+    eLog.info('Relaunching app after critical error: %s', error)
+    app.relaunch()
+    app.exit(0)
   })
 
   /**

@@ -124,6 +124,10 @@ function onState(err, _state) {
     activation: createGetter(() => {
       const ActivationController = require('./controllers/activation-controller');
       return new ActivationController(state);
+    }),
+    modal: createGetter(() => {
+      const ModalController = require('./controllers/modal-controller');
+      return new ModalController(state);
     })
   };
 
@@ -333,6 +337,10 @@ const dispatchHandlers = {
   updateKeyState: (keyData) => controllers.activation().updateKeyState(keyData),
   cleanKeyState: () => controllers.activation().cleanKeyState(),
 
+  // Modals
+  modalUpdate: (modalData) => controllers.modal().modalUpdate(modalData),
+  modalOpen: (modalId) => controllers.modal().modalOpen(modalId),
+
   // Remote casting: Chromecast, Airplay, etc
   toggleCastMenu: (deviceType) => lazyLoadCast().toggleMenu(deviceType),
   selectCastDevice: (index) => lazyLoadCast().selectDevice(index),
@@ -398,16 +406,26 @@ function dispatch(action, ...args) {
     console.log('dispatch: %s %o', action, args);
   }
 
-  const handler = dispatchHandlers[action];
-  if (handler) handler(...args);
-  else console.error('Missing dispatch handler: ' + action);
+  try {
+    const handler = dispatchHandlers[action];
+    if (handler) {
+      handler(...args);
+    } else {
+      throw new Error('Missing dispatch handler: ' + action);
+    }
 
-  // Update the virtual DOM, unless it's just a mouse move event
-  if (
-    action !== 'mediaMouseMoved' ||
-    controllers.playback().showOrHidePlayerControls()
-  ) {
-    update();
+    // Update the virtual DOM, unless it's just a mouse move event
+    if (
+      action !== 'mediaMouseMoved' ||
+      controllers.playback().showOrHidePlayerControls()
+    ) {
+      update();
+    }
+  } catch (error) {
+    console.error('Dispatch error:', error);
+
+    // Restart app after critical error
+    ipcRenderer.send('relaunch-app', error);
   }
 }
 

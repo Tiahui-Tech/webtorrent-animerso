@@ -10,6 +10,7 @@ const { ipcRenderer } = require('electron');
 const remote = require('@electron/remote')
 const eventBus = require('../../lib/event-bus');
 const { debounce } = require('../../../modules/utils');
+const appVersion = require('../../../../package.json').version;
 
 const useDiscordUser = require('../../hooks/useDiscordUser');
 
@@ -254,6 +255,10 @@ const Header = ({ state }) => {
     resetSearch();
   }, [canGoHome, isHome, navigate, setDebouncedSearchTerm, setSearchTerm]);
 
+  const handleClosedBeta = () => {
+    eventBus.emit('modalOpen', 'closedBeta');
+  }
+
   const startDrag = (e) => {
     if (e.button !== 0) return;
     ipcRenderer.send('dragWindow');
@@ -352,12 +357,10 @@ const Header = ({ state }) => {
 
           {/* Animeton Logo */}
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <button onClick={handleHome} className={canGoHome ? 'cursor-pointer' : 'cursor-default'} style={{ WebkitAppRegion: 'no-drag', zIndex: 9999 }}>
-              <div className="flex flex-col items-center">
-                <p className="text-white font-bold text-2xl leading-none">Animeton</p>
-                <span className="text-zinc-400 text-xs mt-1 leading-none">Beta cerrada</span>
-              </div>
-            </button>
+            <div className="flex flex-col items-center" style={{ WebkitAppRegion: 'no-drag', zIndex: 9999 }}>
+              <p onClick={handleHome} className="text-white font-bold text-2xl leading-none" style={{ cursor: canGoHome ? 'pointer' : 'default' }}>Animeton</p>
+              <span onClick={handleClosedBeta} className="text-zinc-400 text-xs mt-1 leading-none" style={{ cursor: 'pointer' }}>{`Beta cerrada (${appVersion})`}</span>
+            </div>
           </div>
 
           {/* Window Controls and Discord User */}
