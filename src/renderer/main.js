@@ -714,22 +714,3 @@ function checkDownloadPath() {
     else state.downloadPathStatus = 'missing';
   });
 }
-
-// Add error handlers
-window.addEventListener('error', (e) => {
-  console.error('Uncaught error:', e.error);
-  // Send to main process to handle restart
-  ipcRenderer.send('uncaughtError', {
-    message: e.error.message,
-    stack: e.error.stack
-  });
-}, true);
-
-window.addEventListener('unhandledrejection', (e) => {
-  console.error('Unhandled rejection:', e.reason);
-  // Send to main process to handle restart
-  ipcRenderer.send('uncaughtError', {
-    message: e.reason.message,
-    stack: e.reason.stack
-  });
-});
