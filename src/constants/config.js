@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3000'
+const API_BASE_URL = 'https://dev-api.animeton.com'
 
 const DISCORD_INVITE_CODE = 'fYNNmKJJfk'
 
