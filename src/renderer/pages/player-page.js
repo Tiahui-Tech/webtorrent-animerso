@@ -102,6 +102,8 @@ function Player({ state, currentTorrent }) {
       const episodeNumber = Number(anitomyData[0].episode_number) || null
       const isPaused = state.playing.isPaused
 
+      eventBus.emit('headerTitle', `${animeName} - E${episodeNumber}`)
+
       dispatch('updateDiscordRPC', {
         details: animeName,
         state: episodeNumber ? `Episodio ${episodeNumber}` : '',

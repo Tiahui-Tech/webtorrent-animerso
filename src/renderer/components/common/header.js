@@ -22,6 +22,8 @@ const PLAYER_PATH = '/player';
 
 const isPlayerRoute = (path) => path?.includes(PLAYER_PATH);
 
+const defaultHeaderTitle = `Beta cerrada (${appVersion})`;
+
 const Header = ({ state }) => {
   const posthog = usePostHog();
   const navigate = useNavigate();
@@ -43,6 +45,7 @@ const Header = ({ state }) => {
   const [opacity, setOpacity] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [headerTitle, setHeaderTitle] = useState(defaultHeaderTitle);
 
   // Debounced setDebouncedSearchTerm
   const debouncedSetSearchTerm = useCallback(
@@ -75,6 +78,7 @@ const Header = ({ state }) => {
 
     // Send special event when leaving player route
     if (wasPreviousPlayer && !isCurrentPlayer) {
+      setHeaderTitle(defaultHeaderTitle);
       posthog?.capture('exit_player', {
         from: '/player',
         to: currentPath
@@ -182,6 +186,16 @@ const Header = ({ state }) => {
       eventBus.off('historyUpdated', updateNavigationState);
     };
   }, []);
+
+  useEffect(() => {
+    const handleHeaderTitle = (newTitle) => {
+      if (isPlayerRoute(location.pathname)) {
+        setHeaderTitle(newTitle);
+      }
+    };
+
+    eventBus.on('headerTitle', handleHeaderTitle);
+  }, [location.pathname]);
 
   const handleBack = useCallback((e) => {
     e.preventDefault();
@@ -379,7 +393,7 @@ const Header = ({ state }) => {
                 className="text-zinc-400 text-xs mt-1 leading-none"
                 style={{ cursor: 'pointer' }}
               >
-                {`Beta cerrada (${appVersion})`}
+                {headerTitle}
               </span>
             </div>
           </div>
