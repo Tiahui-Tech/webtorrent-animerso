@@ -338,6 +338,8 @@ function Player({ state, currentTorrent }) {
     eventBus.on('jumpToTime', (time) => {
       state.playing.jumpToTime = time;
     });
+    
+    state.playing.isPaused = false;
   }, []);
 
   // Show the video as large as will fit in the window, play immediately
