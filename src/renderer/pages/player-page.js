@@ -915,32 +915,6 @@ function renderCastScreen(state) {
   );
 }
 
-function renderCastOptions(state) {
-  if (!state.devices.castMenu) return;
-
-  const { location, devices } = state.devices.castMenu;
-  const player = state.devices[location];
-
-  const items = devices.map((device, ix) => {
-    const isSelected = player.device === device;
-    const name = device.name;
-    return (
-      <li key={ix} onClick={dispatcher('selectCastDevice', ix)}>
-        <i className="icon">
-          {isSelected ? 'radio_button_checked' : 'radio_button_unchecked'}
-        </i>{' '}
-        {name}
-      </li>
-    );
-  });
-
-  return (
-    <ul key="cast-options" className="options-list">
-      {items}
-    </ul>
-  );
-}
-
 function renderSubtitleOptions(state, currentSubtitles) {
   const subtitlesData = state.playing.subtitles;
   if (!currentSubtitles.tracks.length || !subtitlesData.showMenu) return;
@@ -1306,7 +1280,6 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
       onMouseMove={handleMouseMove}
     >
       {elements}
-      {renderCastOptions(state)}
       {renderSubtitleOptions(state, currentSubtitles)}
       {renderAudioTrackOptions(state)}
     </div>

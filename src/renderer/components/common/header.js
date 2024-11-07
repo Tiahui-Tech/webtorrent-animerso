@@ -142,9 +142,9 @@ const Header = ({ state }) => {
 
     setIsMaximized(win.isMaximized());
 
-    win.addListener('maximize', handleMaximize);
-    win.addListener('unmaximize', handleUnmaximize);
-    win.addListener('resize', handleResize);
+    win.on('maximize', handleMaximize);
+    win.on('unmaximize', handleUnmaximize);
+    win.on('resize', handleResize);
   }, []);
 
   useEffect(() => {

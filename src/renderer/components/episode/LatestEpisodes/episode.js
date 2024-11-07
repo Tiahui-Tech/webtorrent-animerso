@@ -27,6 +27,8 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }) => {
     anime?.bannerImage ||
     anime?.coverImage?.extraLarge;
 
+  const episodeDuration = anime?.duration || anime?.episode?.runtime || anime?.episode?.length
+
   const episode = anime?.episode;
 
   const handlePlay = (e) => {
@@ -51,6 +53,7 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }) => {
 
   const cardColor = getNeonColor(animeColors[0]);
 
+
   return (
     <div className="max-w-[400px] px-4">
       <Card className="flex flex-col relative overflow-visible rounded-md border border-zinc-800">
@@ -61,7 +64,7 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }) => {
                 {anime?.title?.romaji}
               </p>
               <span className="text-sm text-gray-400">
-                {`Episodio ${anime?.episode?.episodeNumber || anime?.episode?.episode || '??'}`}
+                {`Episodio ${anime?.torrent?.episode || anime?.episode?.episodeNumber || anime?.episode?.episode || '??'}`}
               </span>
             </div>
             {anime?.torrent?.link.includes('(NF)') && (
@@ -125,12 +128,14 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }) => {
                 {timeAgo(anime?.torrent?.pubDate)}
               </span>
             </div>
-            <div className="flex items-center">
-              <Icon icon="gravity-ui:clock" />
-              <span className="text-sm text-gray-400 ml-1">
-                {`${anime?.duration || anime?.episode?.runtime || anime?.episode?.length} mins`}
-              </span>
-            </div>
+            {episodeDuration && (
+              <div className="flex items-center">
+                <Icon icon="gravity-ui:clock" />
+                <span className="text-sm text-gray-400 ml-1">
+                  {`${episodeDuration} mins`}
+                </span>
+              </div>
+            )}
           </div>
         </CardFooter>
       </Card>
