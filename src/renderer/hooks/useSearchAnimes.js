@@ -1,4 +1,5 @@
 const { useCallback, useState } = require('react');
+const eLog = require('electron-log');
 const { API_BASE_URL } = require('../../constants/config');
 
 const useSearchAnimes = (query, limit = 1) => {
@@ -12,7 +13,7 @@ const useSearchAnimes = (query, limit = 1) => {
       setError(null);
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const response = await fetch(`${API_BASE_URL}/anime/search`, {
         method: 'POST',
@@ -26,8 +27,15 @@ const useSearchAnimes = (query, limit = 1) => {
       setData(result);
       return result;
     } catch (error) {
-      console.error('Error fetching anime data:', error);
-      setError(error.message || 'Error al buscar animes');
+      eLog.error('Error searching animes:', error);
+      console.error('Error searching animes:', error)
+
+      if (error?.message?.includes('signal')) {
+        setError('Ocurrio un error, intentelo de nuevo');
+      } else {
+        setError('Error: ' + error.message);
+      }
+      
       setData([]);
       return [];
     } finally {
