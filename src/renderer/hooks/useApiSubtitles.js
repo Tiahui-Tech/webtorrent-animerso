@@ -14,7 +14,9 @@ const useApiSubtitles = (infoHash) => {
       const response = await fetch(`${API_BASE_URL}/subtitles/${infoHash}`);
       const result = await response.text();
 
-      if (!result) {
+      const resultIsJson = result.includes('{') && result.includes('}');
+
+      if (!result || resultIsJson) {
         return setError('No se encontraron subtítulos');
       }
 

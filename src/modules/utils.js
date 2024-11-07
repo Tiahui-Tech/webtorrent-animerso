@@ -130,6 +130,8 @@ const genGlassStyle = (color, opacity = 15, blur = 15) => {
 };
 
 const translateGenres = (genres) => {
+  if (!genres) return [];
+  
   const translations = {
     'Comedy': 'Comedia',
     'Fantasy': 'Fantasía',

@@ -1260,11 +1260,15 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
     const currentScreen = remote.screen.getDisplayMatching(currentWindow.getBounds());
     const workAreaSize = currentScreen.workAreaSize;
     const currentSize = currentWindow.getSize();
+    const currentPosition = currentWindow.getBounds();
 
+    const isWindowAtOrigin = currentPosition.x === 0 && currentPosition.y === 0;
     const isFullScreenInSize = currentSize[0] === workAreaSize.width &&
       currentSize[1] > workAreaSize.height;
     const isMaximized = currentSize[0] === workAreaSize.width &&
       currentSize[1] === workAreaSize.height;
+
+    const isFullScreen = isFullScreenInSize && isWindowAtOrigin;
 
     // Debug logs to hunt user bugs
     console.log('handleFullScreen workAreaSize', workAreaSize.width, workAreaSize.height);
@@ -1273,19 +1277,18 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
     console.log('handleFullScreen isMaximized', isMaximized);
     console.log('handleFullScreen state.window.isVideoFullScreen', state.window.isVideoFullScreen);
 
-    if (isFullScreenInSize) {
-      exitFullScreen(currentWindow, workAreaSize);
+    if (isFullScreen) {
+      exitFullScreen(currentWindow);
     } else {
       enterFullScreen(currentWindow);
     }
 
-    state.window.isVideoFullScreen = !isFullScreenInSize;
+    state.window.isVideoFullScreen = !isFullScreen;
   }
 
-  function exitFullScreen(window, workAreaSize) {
+  function exitFullScreen(window) {
     window.unmaximize();
     window.setFullScreen(false);
-    window.setBounds(workAreaSize);
   }
 
   function enterFullScreen(window) {
