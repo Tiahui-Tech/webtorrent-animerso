@@ -20,10 +20,10 @@ const timeAgo = (dateISO) => {
 
 const normalize = (title) => title.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-const getAnimeFlags = (animeTitle) => {
+const getAnimeFlags = (subtitles) => {
   const allowedFlags = ['mx', 'es', 'us'];
   const flagRegex = /\[([a-z]{2})\]/g;
-  const matches = animeTitle.match(flagRegex);
+  const matches = subtitles.match(flagRegex);
 
   if (!matches) return [];
 

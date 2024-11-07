@@ -12,6 +12,7 @@ const {
   CardHeader,
   CardBody,
   CardFooter,
+  Tooltip
 } = require('@nextui-org/react');
 const { Icon } = require('@iconify/react');
 const { motion } = require('framer-motion');
@@ -53,13 +54,28 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }) => {
   return (
     <div className="max-w-[400px] px-4">
       <Card className="flex flex-col relative overflow-visible rounded-md border border-zinc-800">
-        <CardHeader className="flex flex-col truncate items-start justify-start">
-          <p className="text-base font-medium truncate w-full cursor-pointer" onClick={handleAnimeClick}>
-            {anime?.title?.romaji}
-          </p>
-          <span className="text-sm text-gray-400">
-            {`Episodio ${anime?.episode?.episodeNumber || anime?.episode?.episode || '??'}`}
-          </span>
+        <CardHeader className="flex flex-col truncate items-start justify-start relative">
+          <div className="flex w-full items-center justify-between">
+            <div className="flex flex-col flex-1 min-w-0">
+              <p className="text-base font-medium truncate w-full cursor-pointer" onClick={handleAnimeClick}>
+                {anime?.title?.romaji}
+              </p>
+              <span className="text-sm text-gray-400">
+                {`Episodio ${anime?.episode?.episodeNumber || anime?.episode?.episode || '??'}`}
+              </span>
+            </div>
+            {anime?.torrent?.link.includes('(NF)') && (
+              <Tooltip content="Netflix Subs" className="bg-zinc-900 text-white" >
+                <Icon
+                  icon="streamline:netflix"
+                  width="26"
+                  height="26"
+                  style={{ color: 'white' }}
+                  className="ml-2 flex-shrink-0"
+                />
+              </Tooltip>
+            )}
+          </div>
         </CardHeader>
         <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}>
           <CardBody
@@ -73,7 +89,7 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }) => {
               className={`aspect-[16/9] w-full h-full object-cover ${isLoading && 'grayscale'}`}
             />
             <div className="flex flex-row gap-2 bg-slate-950/25 px-1 py-0.5 rounded-md absolute top-2 right-2 z-10">
-              {getAnimeFlags(anime?.torrent?.title)}
+              {getAnimeFlags(anime?.torrent?.subtitles)}
             </div>
             {isLoading ? (
               <div className="absolute inset-0 flex items-center justify-center opacity-100 z-30">
