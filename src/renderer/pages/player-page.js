@@ -334,6 +334,12 @@ function Player({ state, currentTorrent }) {
     };
   }, [checkForSubtitles, forceStopSubtitles]);
 
+  useEffect(() => {
+    eventBus.on('jumpToTime', (time) => {
+      state.playing.jumpToTime = time;
+    });
+  }, []);
+
   // Show the video as large as will fit in the window, play immediately
   // If the video is on Chromecast or Airplay, show a title screen instead
   const showVideo = state.playing.location === 'local';

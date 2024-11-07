@@ -183,12 +183,7 @@ module.exports = class PlaybackController {
     }
     if (isCasting(this.state)) Cast.seek(time)
     else {
-      this.state.playing.jumpToTime = time;
-      eventBus.emit('stateUpdate', {
-        playing: {
-          jumpToTime: time
-        }
-      });
+      eventBus.emit('jumpToTime', time);
     }
   }
 
