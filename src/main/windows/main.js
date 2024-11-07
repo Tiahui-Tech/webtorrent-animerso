@@ -158,9 +158,6 @@ function init(state, options) {
 
   // Add memory management
   win.webContents.on('did-finish-load', () => {
-    // Set memory limits
-    app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512');
-
     // Periodically clean up memory
     setInterval(() => {
       if (global.gc) global.gc();
