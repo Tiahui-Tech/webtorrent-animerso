@@ -2,12 +2,13 @@
 
 const React = require('react');
 const { useEffect, useState, useRef, useCallback } = React;
+const { useLocation, useNavigate } = require('react-router-dom');
+const { AnimatePresence, motion } = require('framer-motion');
 
 const remote = require('@electron/remote')
 const BitField = require('bitfield').default;
 const prettyBytes = require('prettier-bytes');
-const { useLocation, useNavigate } = require('react-router-dom');
-const { AnimatePresence, motion } = require('framer-motion');
+
 const useCanvasRpcFrame = require('../hooks/useCanvasRpcFrame');
 const useApiSubtitles = require('../hooks/useApiSubtitles');
 
@@ -17,9 +18,11 @@ const { dispatch, dispatcher } = require('../lib/dispatcher');
 const config = require('../../config');
 const { calculateEta } = require('../lib/time');
 const eventBus = require('../lib/event-bus');
+const { sendNotification } = require('../lib/errors');
 
 const Spinner = require('../components/common/spinner');
-const { sendNotification } = require('../lib/errors');
+const VideoSpinner = require('../components/common/video-spinner');
+
 const { anitomyscript } = require('../../modules/anime');
 
 // Shows a streaming video player. Standard features + Chromecast + Airplay
@@ -338,7 +341,7 @@ function Player({ state, currentTorrent }) {
     eventBus.on('jumpToTime', (time) => {
       state.playing.jumpToTime = time;
     });
-    
+
     state.playing.isPaused = false;
   }, []);
 
@@ -643,146 +646,6 @@ function renderTrack(common, key) {
   }
 }
 
-function renderAudioMetadata(state) {
-  const fileSummary = state.getPlayingFileSummary();
-  if (!fileSummary?.audioInfo) return;
-  const common = fileSummary.audioInfo.common || {};
-
-  // Get audio track info
-  const title = common.title ? common.title : fileSummary.name;
-
-  // Show a small info box in the middle of the screen with title/album/etc
-  const elems = [];
-
-  // Audio metadata: artist(s)
-  const artist = common.artist || common.albumartist;
-  if (artist) {
-    elems.push(
-      <div key="artist" className="audio-artist">
-        <label>Artist</label>
-        {artist}
-      </div>
-    );
-  }
-
-  // Audio metadata: disk & track-number
-  const count = ['track', 'disk'];
-  count.forEach((key) => {
-    const nrElem = renderTrack(common, key);
-    if (nrElem) {
-      elems.push(nrElem);
-    }
-  });
-
-  // Audio metadata: album
-  if (common.album) {
-    elems.push(
-      <div key="album" className="audio-album">
-        <label>Album</label>
-        {common.album}
-      </div>
-    );
-  }
-
-  // Audio metadata: year
-  if (common.year) {
-    elems.push(
-      <div key="year" className="audio-year">
-        <label>Year</label>
-        {common.year}
-      </div>
-    );
-  }
-
-  // Audio metadata: release information (label & catalog-number)
-  if (common.label || common.catalognumber) {
-    const releaseInfo = [];
-    if (
-      common.label &&
-      common.catalognumber &&
-      common.label.length === common.catalognumber.length
-    ) {
-      // Assume labels & catalog-numbers are pairs
-      for (let n = 0; n < common.label.length; ++n) {
-        releaseInfo.push(common.label[0] + ' / ' + common.catalognumber[n]);
-      }
-    } else {
-      if (common.label) {
-        releaseInfo.push(...common.label);
-      }
-      if (common.catalognumber) {
-        releaseInfo.push(...common.catalognumber);
-      }
-    }
-    elems.push(
-      <div key="release" className="audio-release">
-        <label>Release</label>
-        {releaseInfo.join(', ')}
-      </div>
-    );
-  }
-
-  // Audio metadata: format
-  const format = [];
-  fileSummary.audioInfo.format = fileSummary.audioInfo.format || '';
-  if (fileSummary.audioInfo.format.container) {
-    format.push(fileSummary.audioInfo.format.container);
-  }
-  if (
-    fileSummary.audioInfo.format.codec &&
-    fileSummary.audioInfo.format.container !==
-    fileSummary.audioInfo.format.codec
-  ) {
-    format.push(fileSummary.audioInfo.format.codec);
-  }
-  if (fileSummary.audioInfo.format.bitrate) {
-    format.push(
-      Math.round(fileSummary.audioInfo.format.bitrate / 1000) + ' kbit/s'
-    ); // 128 kbit/s
-  }
-  if (fileSummary.audioInfo.format.sampleRate) {
-    format.push(
-      Math.round(fileSummary.audioInfo.format.sampleRate / 100) / 10 + ' kHz'
-    );
-  }
-  if (fileSummary.audioInfo.format.bitsPerSample) {
-    format.push(fileSummary.audioInfo.format.bitsPerSample + '-bit');
-  }
-  if (format.length > 0) {
-    elems.push(
-      <div key="format" className="audio-format">
-        <label>Format</label>
-        {format.join(', ')}
-      </div>
-    );
-  }
-
-  // Audio metadata: comments
-  if (common.comment) {
-    elems.push(
-      <div key="comments" className="audio-comments">
-        <label>Comments</label>
-        {common.comment.join(' / ')}
-      </div>
-    );
-  }
-
-  // Align the title with the other info, if available. Otherwise, center title
-  const emptyLabel = <label />;
-  elems.unshift(
-    <div key="title" className="audio-title">
-      {elems.length ? emptyLabel : undefined}
-      {title}
-    </div>
-  );
-
-  return (
-    <div key="audio-metadata" className="audio-metadata">
-      {elems}
-    </div>
-  );
-}
-
 function renderLoadingSpinner(state) {
   if (state.playing.isPaused) return;
   const isProbablyStalled =
@@ -800,16 +663,11 @@ function renderLoadingSpinner(state) {
   if (fileProgress === 100) return;
 
   return (
-    <div key="loading" className="media-stalled">
-      <div key="loading-spinner" className="loading-spinner" />
-      <div key="loading-progress" className="loading-status ellipsis">
-        <span>
-          <span className="progress">{fileProgress}%</span> downloaded
-        </span>
-        <span> ↓ {prettyBytes(prog.downloadSpeed || 0)}/s</span>
-        <span>  {prettyBytes(prog.uploadSpeed || 0)}/s</span>
-      </div>
-    </div>
+    <VideoSpinner
+      progress={fileProgress}
+      downloadSpeed={prog.downloadSpeed}
+      uploadSpeed={prog.uploadSpeed}
+    />
   );
 }
 
