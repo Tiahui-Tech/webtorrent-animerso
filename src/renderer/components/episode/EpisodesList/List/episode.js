@@ -4,7 +4,7 @@ const { Icon } = require('@iconify/react');
 const { Card, CardBody, Image } = require('@nextui-org/react');
 const { motion } = require('framer-motion');
 
-const EpisodeCard = React.memo(({ episode, isLoading, onPlay }) => {
+const EpisodeCard = React.memo(({ episode, isLoading, onPlay, isNew, animeColors, textColor }) => {
   const episodeHasTorrent = episode?.torrent ? true : false;
 
   const handlePlay = (e) => {
@@ -33,8 +33,13 @@ const EpisodeCard = React.memo(({ episode, isLoading, onPlay }) => {
       className="w-full overflow-visible"
     >
       <Card
-        className="w-full h-full relative transition-all duration-300 ease-in-out cursor-pointer group/card bg-zinc-950 rounded-xl border-2 border-zinc-900"
-        style={{ zIndex: 9000 }}
+        className="w-full h-full relative transition-all duration-300 ease-in-out cursor-pointer group/card rounded-xl border-2"
+        style={{
+          zIndex: 9000,
+          backgroundColor: isNew ? `${animeColors[0]}30` : '#09090b',
+          borderColor: isNew ? `${animeColors[0]}80` : '#18181b',
+          boxShadow: isNew ? `0 0 20px ${animeColors[0]}` : 'none'
+        }}
       >
         <CardBody className="flex flex-row relative gap-4 justify-start overflow-hidden">
           <div className="flex flex-row gap-4 items-center justify-between w-full overflow-hidden">
@@ -48,6 +53,16 @@ const EpisodeCard = React.memo(({ episode, isLoading, onPlay }) => {
                 {!episodeHasTorrent && <div
                   className="absolute inset-0 bg-white rounded-2xl z-10"
                 />}
+
+                {isNew && <span
+                  className="absolute top-0 left-2 mt-2 text-zinc-900 font-medium p-2.5 py-0.5 rounded-full w-fit z-30 opacity-100"
+                  style={{
+                    backgroundColor: animeColors.at(0),
+                    color: textColor,
+                  }}
+                >
+                  NUEVO
+                </span>}
                 <div
                   className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out z-30 ${isLoading ? 'opacity-70' : 'opacity-0 group-hover/card:opacity-70'}`}
                   style={{

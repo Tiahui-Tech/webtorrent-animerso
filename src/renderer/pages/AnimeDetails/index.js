@@ -90,6 +90,7 @@ const AnimeDetails = ({ state }) => {
           <AnimeEpisodesList
             idAnilist={idAnilist}
             animeColors={animeColors}
+            textColor={textColor}
             sectionTitle="Episodios"
           />
         </div>
