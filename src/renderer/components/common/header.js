@@ -398,7 +398,7 @@ const Header = ({ state }) => {
                   {headerTitle}
                 </span>
                 {!isPlayerRoute(location.pathname) && (
-                  <span className="text-zinc-500 text-xs mt-1">v{appVersion}</span>
+                  <span onClick={handleClosedBeta} className="text-zinc-500 text-xs mt-1 cursor-pointer">v{appVersion}</span>
                 )}
               </div>
             </div>

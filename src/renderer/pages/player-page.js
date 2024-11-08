@@ -96,34 +96,59 @@ function Player({ state, currentTorrent }) {
     setSubtitlesFound(true);
   }, [apiSubtitles, isFetchingSubtitles]);
 
-  // Discord RPC
+  // Discord RPC and header title
   useEffect(() => {
-    const updateDiscordRPC = async () => {
-      const anitomyData = await anitomyscript(currentTorrent.name)
+    const getAnimeInfo = async () => {
+      const anitomyData = await anitomyscript(currentTorrent.name);
+      return {
+        animeName: anitomyData[0].anime_title,
+        episodeNumber: Number(anitomyData[0].episode_number) || null
+      };
+    };
 
-      const animeName = anitomyData[0].anime_title
-      const episodeNumber = Number(anitomyData[0].episode_number) || null
-      const isPaused = state.playing.isPaused
-
-      console.log('headerTitle emit', `${animeName} - E${episodeNumber}`)
-      eventBus.emit('headerTitle', `${animeName} - E${episodeNumber}`)
+    const updateDiscordRPC = async (animeInfo) => {
+      const isPaused = state.playing.isPaused;
+      const { animeName, episodeNumber } = animeInfo;
 
       dispatch('updateDiscordRPC', {
         details: animeName,
         state: episodeNumber ? `Episodio ${episodeNumber}` : '',
         assets: {
-          small_image: isPaused ? 'pause' : 'play',
+          small_image: isPaused ? 'pause' : 'play', 
           small_text: isPaused ? 'Pausado' : 'Reproduciendo',
           large_image: rpcFrame,
         },
       });
-    }
+    };
 
-    console.log('updateDiscordRPC', { currentTorrent, state: state.playing.isPaused, isTorrentReady, rpcFrame })
+    const updateHeaderTitle = (animeInfo) => {
+      const { animeName, episodeNumber } = animeInfo;
+      let title = animeName.replace(' - Movie', '');
+      
+      if (episodeNumber) {
+        title = `${title} - E${episodeNumber}`;
+      }
 
-    if (currentTorrent && isTorrentReady && rpcFrame) {
-      updateDiscordRPC()
-    }
+      console.log('headerTitle emit', title);
+      eventBus.emit('headerTitle', title);
+    };
+
+    const updatePlayerInfo = async () => {
+      const animeInfo = await getAnimeInfo();
+      updateHeaderTitle(animeInfo);
+
+      if (currentTorrent && isTorrentReady && rpcFrame) {
+        console.log('updateDiscordRPC', { 
+          currentTorrent, 
+          isPaused: state.playing.isPaused, 
+          isTorrentReady, 
+          rpcFrame 
+        });
+        updateDiscordRPC(animeInfo);
+      }
+    };
+
+    updatePlayerInfo();
   }, [currentTorrent, state.playing.isPaused, isTorrentReady, rpcFrame]);
 
   useEffect(() => {
