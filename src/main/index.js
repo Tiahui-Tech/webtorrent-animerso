@@ -1,7 +1,7 @@
 console.time('init')
 
 require('@electron/remote/main').initialize()
-const { app, webContents } = require('electron')
+const { app, webContents, ipcMain } = require('electron')
 const { autoUpdater } = require('electron-updater')
 const eLog = require('electron-log')
 
@@ -91,12 +91,56 @@ function init() {
       delayedInit(state)
     }, config.DELAYED_INIT)
 
-    // Report uncaught exceptions
+    // Report uncaught exceptions and restart app
     process.on('uncaughtException', (err) => {
       console.error(err)
       const error = { message: err.message, stack: err.stack }
-      windows.main.dispatch('uncaughtError', 'main', error)
+      eLog.error('Uncaught exception:', error)
+      
+      // Notify main window before restarting
+      try {
+        windows.main.dispatch('uncaughtError', 'main', error)
+      } catch (e) {
+        eLog.error('Failed to dispatch error to window:', e)
+      }
+
+      // Wait a bit to ensure logs are written
+      setTimeout(() => {
+        eLog.info('Restarting app after uncaught exception...')
+        app.relaunch()
+        app.exit(1)
+      }, 1000)
     })
+
+    // Handle promise rejections similarly
+    process.on('unhandledRejection', (reason, promise) => {
+      eLog.error('Unhandled rejection at:', promise, 'reason:', reason)
+      
+      setTimeout(() => {
+        eLog.info('Restarting app after unhandled rejection...')
+        app.relaunch()
+        app.exit(1)
+      }, 1000)
+    })
+
+    // Handle uncaught errors from renderer
+    ipcMain.on('uncaughtError', (event, error) => {
+      eLog.error('Uncaught error from renderer:', error);
+      
+      // Notify main window before restarting
+      try {
+        windows.main.dispatch('uncaughtError', 'renderer', error);
+      } catch (e) {
+        eLog.error('Failed to dispatch error to window:', e);
+      }
+
+      // Wait a bit to ensure logs are written
+      setTimeout(() => {
+        eLog.info('Restarting app after uncaught error...');
+        app.relaunch();
+        app.exit(1);
+      }, 1000);
+    });
   }
 
   // Enable app logging into default directory, i.e. /Library/Logs/WebTorrent
@@ -148,18 +192,29 @@ function init() {
         wc.delete()
       })
     }, 2000)
-
-    addDebugListeners()
-  })
-
-  app.on('window-all-closed', () => {
-    eLog.info('App window all closed')
-    app.quit()
   })
 
   app.on('activate', () => {
     eLog.info('App activate')
     if (isReady) windows.main.show()
+  })
+
+  // Add crash handler
+  app.on('render-process-gone', (event, webContents, details) => {
+    eLog.error('App crashed:', details.reason)
+    
+    // Force restart app on crash
+    if (details.reason === 'crashed' || details.reason === 'killed') {
+      eLog.info('Restarting app after crash...')
+      app.relaunch()
+      app.exit(0)
+    }
+  })
+
+  // Handle unresponsive window
+  app.on('window-all-closed', () => {
+    eLog.info('App window all closed')
+    app.quit()
   })
 }
 

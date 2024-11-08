@@ -1,4 +1,4 @@
-const main = module.exports = {
+let main = module.exports = {
   dispatch,
   hide,
   init,
@@ -20,6 +20,7 @@ const { app, BrowserWindow, screen, ipcMain } = require('electron')
 const { autoUpdater } = require('electron-updater')
 const debounce = require('debounce')
 const DiscordRPC = require('discord-rpc')
+const eLog = require('electron-log')
 
 const config = require('../../config')
 const log = require('../log')
@@ -135,6 +136,17 @@ function init(state, options) {
     }
   })
 
+  win.on('unresponsive', () => {
+    eLog.error('Window became unresponsive')
+    win.webContents.reload()
+  })
+
+  win.webContents.on('crashed', (event, killed) => {
+    eLog.error('Window crashed:', killed ? 'killed' : 'crashed')
+    app.relaunch()
+    app.exit(0)
+  })
+
   // Initialize Discord RPC
   initDiscordRPC()
 
@@ -160,11 +172,11 @@ function init(state, options) {
   // Clean up when window is closed
   win.on('closed', () => {
     if (global.gc) global.gc();
-    win = null;
+    main.win = null;
   });
 
   win.webContents.on('destroyed', () => {
-    log.info('Main window webContents destroyed')
+    eLog.error('Main window webContents destroyed')
     if (rpc) {
       rpc.destroy()
       rpc = null

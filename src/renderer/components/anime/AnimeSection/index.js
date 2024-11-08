@@ -57,7 +57,7 @@ const AnimeSection = ({ state, sectionTitle, searchTerm, fullScreen }) => {
           </>
         </div>
       ) : (
-        <div className="grid grid-cols-auto-fit gap-8 justify-center items-center min-h-[400px] w-full">
+        <div className="grid grid-cols-auto-fit gap-8 justify-center items-start min-h-[400px] w-full">
           {displayAnimes.map((anime, i) => (
             <AnimeCard
               key={`anime-${anime.id}-${i}`}

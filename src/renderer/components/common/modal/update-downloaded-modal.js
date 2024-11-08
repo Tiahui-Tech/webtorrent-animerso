@@ -7,22 +7,22 @@ function UpdateDownloadedModal({ isOpen, setIsOpen }) {
     const { data: version, isLoading, error } = useGithubVersion('latest')
 
     return (
-        <Modal 
-            isOpen={isOpen} 
+        <Modal
+            isOpen={isOpen}
             onClose={() => setIsOpen(false)}
             className="dark"
         >
             <ModalContent>
                 <ModalHeader className="font-bold text-2xl text-white flex items-center gap-3">
-                    <Icon 
-                        icon="gravity-ui:cloud-check" 
-                        width="32" 
+                    <Icon
+                        icon="gravity-ui:cloud-check"
+                        width="32"
                         height="32"
-                        className="text-white mt-1" 
+                        className="text-white mt-1"
                     />
                     {isLoading ? 'Preparando actualización...' : `Animeton v${version?.version}`}
                 </ModalHeader>
-                <Divider className="bg-gray-700" />
+                <Divider className="bg-zinc-700" />
                 <ModalBody>
                     <div className="space-y-4 text-white">
                         {error ? (
@@ -31,15 +31,15 @@ function UpdateDownloadedModal({ isOpen, setIsOpen }) {
                             <>
                                 <div className="space-y-2">
                                     <h3 className="text-xl font-semibold">¡Nueva actualización disponible!</h3>
-                                    <p className="text-gray-300">La actualización se ha descargado y está lista para instalarse.</p>
+                                    <p className="text-zinc-300">La actualización se ha descargado y está lista para instalarse.</p>
                                 </div>
-                                
+
                                 {!isLoading && version?.changelog && (
                                     <div className="mt-4">
-                                        <h4 className="text-md font-medium mb-2 text-gray-300">Novedades:</h4>
+                                        <h4 className="text-md font-medium mb-2 text-zinc-300">Novedades:</h4>
                                         <ul className="list-disc list-inside space-y-1 pl-2">
                                             {version.changelog.map((change, index) => (
-                                                <li key={index} className="text-gray-400 text-sm">{change}</li>
+                                                <li key={index} className="text-zinc-400 text-sm">{change}</li>
                                             ))}
                                         </ul>
                                     </div>
@@ -48,10 +48,10 @@ function UpdateDownloadedModal({ isOpen, setIsOpen }) {
                         )}
                     </div>
                 </ModalBody>
-                <Divider className="bg-gray-700" />
+                <Divider className="bg-zinc-700" />
                 <ModalFooter className="flex gap-3">
                     <Button
-                        className="bg-transparent text-white font-medium hover:bg-white/10"
+                        className="bg-zinc-700 text-white font-medium hover:opacity-90"
                         onClick={() => setIsOpen(false)}
                     >
                         Más tarde
