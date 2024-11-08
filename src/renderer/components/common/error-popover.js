@@ -7,7 +7,7 @@ const { usePostHog } = require('posthog-js/react');
 const ErrorPopover = ({ state }) => {
     const posthog = usePostHog();
     const now = new Date().getTime();
-    const recentErrors = state.errors.filter((x) => now - x.time < 5000);
+    const recentErrors = state.errors.filter((x) => now - x.time < 5000 && x.type !== 'debug');
     const hasErrors = recentErrors.length > 0;
 
     const lastSentErrorRef = useRef(null);
