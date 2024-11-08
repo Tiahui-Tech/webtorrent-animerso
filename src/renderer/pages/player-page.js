@@ -158,33 +158,6 @@ function Player({ state, currentTorrent }) {
     };
   }, [setup, destroy]);
 
-  useEffect(() => {
-    let isReadyIntervalId;
-
-    if (!isTorrentReady) {
-      isReadyIntervalId = setInterval(() => {
-        if (!isTorrentReady && !subtitlesFound) {
-          console.log('Torrent not ready after 20 seconds, destroying player');
-          if (destroy) {
-            destroy();
-          }
-          // Navigate back to the previous page
-          navigate(-1);
-
-          sendNotification(state, { message: 'No se pudo cargar el video, intenta de nuevo mas tarde.' })
-        } else {
-          clearInterval(isReadyIntervalId);
-        }
-      }, 20000); // 20 seconds
-    }
-
-    return () => {
-      if (isReadyIntervalId) {
-        clearInterval(isReadyIntervalId);
-      }
-    };
-  }, [isTorrentReady, subtitlesFound, destroy]);
-
   // References for managing subtitle state
   const subtitlesRef = useRef({
     exist: subtitlesExist,
@@ -1105,6 +1078,7 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
     const currentSize = currentWindow.getSize();
     const currentPosition = currentWindow.getBounds();
 
+
     const isWindowAtOrigin = currentPosition.x === 0 && currentPosition.y === 0;
     const isFullScreenInSize = currentSize[0] === workAreaSize.width &&
       currentSize[1] > workAreaSize.height;
@@ -1131,11 +1105,13 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
 
   function exitFullScreen(window) {
     window.unmaximize();
+    window.setAspectRatio(0);
     window.setFullScreen(false);
   }
 
   function enterFullScreen(window) {
     window.maximize();
+    window.setAspectRatio(16 / 9);
     window.setFullScreen(true);
   }
 

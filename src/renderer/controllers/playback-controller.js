@@ -410,12 +410,6 @@ module.exports = class PlaybackController {
 
     if (!state.playing.isReady) telemetry.logPlayAttempt('abandoned') // user gave up waiting
 
-    const torrentInfoHash = state.playing.infoHash
-
-    setTimeout(() => {
-      dispatch('deleteTorrent', torrentInfoHash, true)
-    }, 3000)
-
     // Reset the window contents back to the home screen
     state.playing = State.getDefaultPlayState()
     state.server = null
