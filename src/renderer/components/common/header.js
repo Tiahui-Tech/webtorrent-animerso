@@ -189,6 +189,7 @@ const Header = ({ state }) => {
 
   useEffect(() => {
     const handleHeaderTitle = (newTitle) => {
+      console.log('headerTitle on', newTitle);
       if (isPlayerRoute(location.pathname)) {
         setHeaderTitle(newTitle);
       }

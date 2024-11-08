@@ -120,9 +120,9 @@ module.exports = class TorrentListController {
   // TODO: use torrentKey, not infoHash
   toggleTorrent (infoHash) {
     const torrentSummary = TorrentSummary.getByKey(this.state, infoHash)
-    if (torrentSummary.status === 'paused') {
+    if (torrentSummary?.status === 'paused') {
       torrentSummary.status = 'new'
-      this.startTorrentingSummary(torrentSummary.torrentKey)
+      this.startTorrentingSummary(torrentSummary?.torrentKey)
       sound.play('ENABLE')
       return
     }
@@ -132,10 +132,10 @@ module.exports = class TorrentListController {
 
   pauseAllTorrents () {
     this.state.saved.torrents.forEach((torrentSummary) => {
-      if (torrentSummary.status === 'downloading' ||
-          torrentSummary.status === 'seeding') {
+      if (torrentSummary?.status === 'downloading' ||
+          torrentSummary?.status === 'seeding') {
         torrentSummary.status = 'paused'
-        ipcRenderer.send('wt-stop-torrenting', torrentSummary.infoHash)
+        ipcRenderer.send('wt-stop-torrenting', torrentSummary?.infoHash)
       }
     })
     sound.play('DISABLE')
@@ -143,9 +143,9 @@ module.exports = class TorrentListController {
 
   resumeAllTorrents () {
     this.state.saved.torrents.forEach((torrentSummary) => {
-      if (torrentSummary.status === 'paused') {
+      if (torrentSummary?.status === 'paused') {
         torrentSummary.status = 'downloading'
-        this.startTorrentingSummary(torrentSummary.torrentKey)
+        this.startTorrentingSummary(torrentSummary?.torrentKey)
       }
     })
     sound.play('ENABLE')
@@ -153,21 +153,21 @@ module.exports = class TorrentListController {
 
   pauseTorrent (torrentSummary, playSound) {
     torrentSummary.status = 'paused'
-    ipcRenderer.send('wt-stop-torrenting', torrentSummary.infoHash)
+    ipcRenderer.send('wt-stop-torrenting', torrentSummary?.infoHash)
 
     if (playSound) sound.play('DISABLE')
   }
 
   prioritizeTorrent (infoHash) {
     this.state.saved.torrents
-      .filter(torrent => ['downloading', 'seeding'].includes(torrent.status)) // Active torrents only.
+      .filter(torrent => ['downloading', 'seeding'].includes(torrent?.status)) // Active torrents only.
       .forEach((torrent) => { // Pause all active torrents except the one that started playing.
-        if (infoHash === torrent.infoHash) return
+        if (infoHash === torrent?.infoHash) return
 
         // Pause torrent without playing sounds.
         this.pauseTorrent(torrent, false)
 
-        this.state.saved.torrentsToResume.push(torrent.infoHash)
+        this.state.saved.torrentsToResume.push(torrent?.infoHash)
       })
 
     console.log('Playback Priority: paused torrents: ', this.state.saved.torrentsToResume)
@@ -186,11 +186,11 @@ module.exports = class TorrentListController {
 
   toggleTorrentFile (infoHash, index) {
     const torrentSummary = TorrentSummary.getByKey(this.state, infoHash)
-    torrentSummary.selections[index] = !torrentSummary.selections[index]
+    torrentSummary.selections[index] = !torrentSummary?.selections[index]
 
     // Let the WebTorrent process know to start or stop fetching that file
-    if (torrentSummary.status !== 'paused') {
-      ipcRenderer.send('wt-select-files', infoHash, torrentSummary.selections)
+    if (torrentSummary?.status !== 'paused') {
+      ipcRenderer.send('wt-select-files', infoHash, torrentSummary?.selections)
     }
   }
 
