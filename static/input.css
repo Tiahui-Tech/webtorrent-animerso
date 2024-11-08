@@ -283,6 +283,8 @@ table {
 .player .letterbox {
   width: 100%;
   height: 100%;
+  max-width: 100vw;
+  max-height: 100vh;
   display: flex;
   background-size: cover;
   background-position: center;

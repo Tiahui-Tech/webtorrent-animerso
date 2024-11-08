@@ -1105,13 +1105,11 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
 
   function exitFullScreen(window) {
     window.unmaximize();
-    window.setAspectRatio(0);
     window.setFullScreen(false);
   }
 
   function enterFullScreen(window) {
     window.maximize();
-    window.setAspectRatio(16 / 9);
     window.setFullScreen(true);
   }
 
