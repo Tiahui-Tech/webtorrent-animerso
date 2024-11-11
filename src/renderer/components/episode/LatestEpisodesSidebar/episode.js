@@ -1,7 +1,7 @@
 const React = require('react');
-const {  memo } = React;
+const { memo } = React;
 const { Icon } = require('@iconify/react');
-const { Image } = require('@nextui-org/react');
+const { Image, Tooltip } = require('@nextui-org/react');
 
 
 const Episode = memo(({ anime, isLoading, onPlay }) => {
@@ -10,6 +10,8 @@ const Episode = memo(({ anime, isLoading, onPlay }) => {
     anime?.episode?.image ||
     anime?.bannerImage ||
     anime?.coverImage?.extraLarge;
+
+  const episodeDuration = anime?.duration || anime?.episode?.runtime || anime?.episode?.length
 
   const episode = anime?.episode;
 
@@ -33,6 +35,17 @@ const Episode = memo(({ anime, isLoading, onPlay }) => {
           <div className="absolute inset-0 flex items-center justify-center opacity-0 transition duration-300 ease-in-out shadow-current hover:opacity-50 z-10">
             <Icon icon="gravity-ui:play-fill" className="pointer-events-none" width="64" height="64" style={{ color: '#000' }} />
           </div>
+          {anime?.torrent?.link.includes('(NF)') && (
+            <Tooltip content="Netflix Subs" className="bg-zinc-900 text-white" >
+              <Icon
+                icon="streamline:netflix"
+                width="24"
+                height="24"
+                style={{ color: 'white', filter: 'drop-shadow(0 0 10px rgba(0, 0, 0, 0.5))' }}
+                className="absolute top-2 right-2 z-20"
+              />
+            </Tooltip>
+          )}
           {isLoading ? (
             <div className="absolute inset-0 flex items-center justify-center opacity-100 z-10">
               <Icon
@@ -52,9 +65,11 @@ const Episode = memo(({ anime, isLoading, onPlay }) => {
           <p className="text-base text-left font-medium truncate flex-grow min-w-0">
             {`${anime?.title?.romaji}`}
           </p>
-          <p className="text-base text-right text-gray-400 whitespace-nowrap ml-2 flex-shrink-0">
-            {`${anime?.duration || anime?.episode?.runtime || anime?.episode?.length} mins`}
-          </p>
+          {episodeDuration && (
+            <p className="text-base text-right text-gray-400 whitespace-nowrap ml-2 flex-shrink-0">
+              {`${episodeDuration} mins`}
+            </p>
+          )}
         </div>
       </div>
     </div>

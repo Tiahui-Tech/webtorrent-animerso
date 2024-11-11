@@ -96,33 +96,59 @@ function Player({ state, currentTorrent }) {
     setSubtitlesFound(true);
   }, [apiSubtitles, isFetchingSubtitles]);
 
-  // Discord RPC
+  // Discord RPC and header title
   useEffect(() => {
-    const updateDiscordRPC = async () => {
-      const anitomyData = await anitomyscript(currentTorrent.name)
+    const getAnimeInfo = async () => {
+      const anitomyData = await anitomyscript(currentTorrent.name);
+      return {
+        animeName: anitomyData[0].anime_title,
+        episodeNumber: Number(anitomyData[0].episode_number) || null
+      };
+    };
 
-      const animeName = anitomyData[0].anime_title
-      const episodeNumber = Number(anitomyData[0].episode_number) || null
-      const isPaused = state.playing.isPaused
-
-      eventBus.emit('headerTitle', `${animeName} - E${episodeNumber}`)
+    const updateDiscordRPC = async (animeInfo) => {
+      const isPaused = state.playing.isPaused;
+      const { animeName, episodeNumber } = animeInfo;
 
       dispatch('updateDiscordRPC', {
         details: animeName,
         state: episodeNumber ? `Episodio ${episodeNumber}` : '',
         assets: {
-          small_image: isPaused ? 'pause' : 'play',
+          small_image: isPaused ? 'pause' : 'play', 
           small_text: isPaused ? 'Pausado' : 'Reproduciendo',
           large_image: rpcFrame,
         },
       });
-    }
+    };
 
-    console.log('updateDiscordRPC', { currentTorrent, state: state.playing.isPaused, isTorrentReady, rpcFrame })
+    const updateHeaderTitle = (animeInfo) => {
+      const { animeName, episodeNumber } = animeInfo;
+      let title = animeName.replace(' - Movie', '');
+      
+      if (episodeNumber) {
+        title = `${title} - E${episodeNumber}`;
+      }
 
-    if (currentTorrent && isTorrentReady && rpcFrame) {
-      updateDiscordRPC()
-    }
+      console.log('headerTitle emit', title);
+      eventBus.emit('headerTitle', title);
+    };
+
+    const updatePlayerInfo = async () => {
+      const animeInfo = await getAnimeInfo();
+      updateHeaderTitle(animeInfo);
+
+      if (currentTorrent && isTorrentReady && rpcFrame) {
+        console.log('updateDiscordRPC', { 
+          currentTorrent, 
+          isPaused: state.playing.isPaused, 
+          isTorrentReady, 
+          rpcFrame 
+        });
+        updateDiscordRPC(animeInfo);
+      }
+    };
+
+    updatePlayerInfo();
   }, [currentTorrent, state.playing.isPaused, isTorrentReady, rpcFrame]);
 
   useEffect(() => {
@@ -156,33 +182,6 @@ function Player({ state, currentTorrent }) {
       }
     };
   }, [setup, destroy]);
-
-  useEffect(() => {
-    let isReadyIntervalId;
-
-    if (!isTorrentReady) {
-      isReadyIntervalId = setInterval(() => {
-        if (!isTorrentReady && !subtitlesFound) {
-          console.log('Torrent not ready after 20 seconds, destroying player');
-          if (destroy) {
-            destroy();
-          }
-          // Navigate back to the previous page
-          navigate(-1);
-
-          sendNotification(state, { message: 'No se pudo cargar el video, intenta de nuevo mas tarde.' })
-        } else {
-          clearInterval(isReadyIntervalId);
-        }
-      }, 20000); // 20 seconds
-    }
-
-    return () => {
-      if (isReadyIntervalId) {
-        clearInterval(isReadyIntervalId);
-      }
-    };
-  }, [isTorrentReady, subtitlesFound, destroy]);
 
   // References for managing subtitle state
   const subtitlesRef = useRef({
@@ -1103,6 +1102,7 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
     const workAreaSize = currentScreen.workAreaSize;
     const currentSize = currentWindow.getSize();
     const currentPosition = currentWindow.getBounds();
+
 
     const isWindowAtOrigin = currentPosition.x === 0 && currentPosition.y === 0;
     const isFullScreenInSize = currentSize[0] === workAreaSize.width &&
