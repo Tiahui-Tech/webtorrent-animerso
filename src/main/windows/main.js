@@ -158,9 +158,6 @@ function init(state, options) {
 
   // Add memory management
   win.webContents.on('did-finish-load', () => {
-    // Set memory limits
-    app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512');
-
     // Periodically clean up memory
     setInterval(() => {
       if (global.gc) global.gc();
@@ -346,11 +343,20 @@ function initDiscordRPC() {
     updateDiscordRPC(defaultStatus)
   })
 
+  // Add error handling
+  rpc.on('disconnected', () => {
+    eLog.warn('Discord RPC disconnected, attempting to reconnect...')
+    loginRPC()
+  })
+
   loginRPC()
 }
 
 function loginRPC() {
-  rpc.login({ clientId: discordClientId }).catch(() => {
+  if (!rpc) return
+
+  rpc.login({ clientId: discordClientId }).catch((err) => {
+    eLog.error('Discord RPC login failed:', err)
     setTimeout(() => loginRPC(), 5000).unref()
   })
 }
@@ -360,32 +366,45 @@ function updateDiscordRPC(params = {}) {
 }
 
 function setDiscordRPC(params = {}) {
-  if (!rpc) return
+  // Check if RPC exists and is connected
+  if (!rpc || !rpc.transport) {
+    eLog.warn('Discord RPC not connected, skipping status update')
+    return
+  }
 
-  const defaultActivityData = {
-    instance: true,
-    type: 3,
-    timestamps: {
-      start: initialTimestamp
-    },
-    buttons: [
-      {
-        label: 'Descarga la App',
-        url: 'https://www.animeton.com/'
+  try {
+    const defaultActivityData = {
+      instance: true,
+      type: 3,
+      timestamps: {
+        start: initialTimestamp
+      },
+      buttons: [
+        {
+          label: 'Descarga la App',
+          url: 'https://www.animeton.com/'
+        }
+      ],
+      assets: {
+        large_image: 'animeton'
       }
-    ],
-    assets: {
-      large_image: 'animeton'
-    }
-  };
+    };
 
-  const activityData = {
-    ...defaultActivityData,
-    ...params,
-    timestamps: { ...defaultActivityData.timestamps, ...params.timestamps },
-    buttons: params.buttons || defaultActivityData.buttons,
-    assets: { ...defaultActivityData.assets, ...params.assets }
-  };
+    const activityData = {
+      ...defaultActivityData,
+      ...params,
+      timestamps: { ...defaultActivityData.timestamps, ...params.timestamps },
+      buttons: params.buttons || defaultActivityData.buttons,
+      assets: { ...defaultActivityData.assets, ...params.assets }
+    };
 
-  rpc.request('SET_ACTIVITY', { activity: activityData, pid: process.pid })
+    rpc.request('SET_ACTIVITY', { 
+      activity: activityData, 
+      pid: process.pid 
+    }).catch(err => {
+      eLog.error('Failed to update Discord status:', err)
+    })
+  } catch (err) {
+    eLog.error('Error setting Discord RPC:', err)
+  }
 }

@@ -22,8 +22,8 @@ State.load(onState);
 
 const createGetter = require('fn-getter');
 const debounce = require('debounce');
-const dragDrop = require('drag-drop');
 const electron = require('electron');
+const eLog = require('electron-log');
 const remote = require('@electron/remote')
 const fs = require('fs');
 const React = require('react');
@@ -34,7 +34,6 @@ const { PostHogProvider } = require('posthog-js/react');
 const config = require('../config');
 const telemetry = require('./lib/telemetry');
 const sound = require('./lib/sound');
-const TorrentPlayer = require('./lib/torrent-player');
 const eventBus = require('./lib/event-bus');
 
 // Perf optimization: Needed immediately, so do not lazy load it below
@@ -163,11 +162,6 @@ function onState(err, _state) {
   // Listen for messages from the main process
   setupIpc();
 
-  // Drag and drop files/text to start torrenting or seeding
-  dragDrop('body', {
-    onDrop: onOpen,
-    onDropText: onOpen
-  });
 
   // ...same thing if you paste a torrent
   document.addEventListener('paste', onPaste);
@@ -382,7 +376,6 @@ const dispatchHandlers = {
   updateDiscordRPC: (details) => ipcRenderer.send('updateDiscordRPC', details),
 
   // Everything else
-  onOpen,
   error: onError,
   uncaughtError: (proc, err) => telemetry.logUncaughtError(proc, err),
   stateSave: () => State.save(state),
@@ -565,46 +558,9 @@ function setDimensions(dimensions) {
   state.playing.aspectRatio = aspectRatio;
 }
 
-// Called when the user adds files (.torrent, files to seed, subtitles) to the app
-// via any method (drag-drop, drag to app icon, command line)
-function onOpen(files) {
-  if (!Array.isArray(files)) files = [files];
-
-  // File API seems to transform "magnet:?foo" in "magnet:///?foo"
-  // this is a sanitization
-  files = files.map((file) => {
-    if (typeof file !== 'string') return file;
-    return file.replace(/^magnet:\/+\?/i, 'magnet:?');
-  });
-
-  const url = state.location.url();
-  const allTorrents = files.every(TorrentPlayer.isTorrent);
-  const allSubtitles = files.every(controllers.subtitles().isSubtitle);
-
-  if (allTorrents) {
-    // Drop torrents onto the app: go to home screen, add torrents, no matter what
-    dispatch('backToList');
-    // All .torrent files? Add them.
-    files.forEach((file) => controllers.torrentList().addTorrent(file));
-  } else if (url === 'player' && allSubtitles) {
-    // Drop subtitles onto a playing video: add subtitles
-    controllers.subtitles().addSubtitles(files, true);
-  } else if (url === 'home') {
-    // Drop files onto home screen: show Create Torrent
-    state.modal = null;
-    controllers.torrentList().showCreateTorrent(files);
-  } else {
-    // Drop files onto any other screen: show error
-    return onError(
-      'Please go back to the torrent list before creating a new torrent.'
-    );
-  }
-
-  update();
-}
-
 function onError(err) {
   console.error(err.stack || err);
+  eLog.error(err);
   sound.play('ERROR');
 
   eventBus.emit('navigate', {

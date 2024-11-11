@@ -126,20 +126,6 @@ function init() {
     // Handle uncaught errors from renderer
     ipcMain.on('uncaughtError', (event, error) => {
       eLog.error('Uncaught error from renderer:', error);
-      
-      // Notify main window before restarting
-      try {
-        windows.main.dispatch('uncaughtError', 'renderer', error);
-      } catch (e) {
-        eLog.error('Failed to dispatch error to window:', e);
-      }
-
-      // Wait a bit to ensure logs are written
-      setTimeout(() => {
-        eLog.info('Restarting app after uncaught error...');
-        app.relaunch();
-        app.exit(1);
-      }, 1000);
     });
   }
 

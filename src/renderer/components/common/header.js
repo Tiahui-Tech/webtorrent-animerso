@@ -22,6 +22,8 @@ const PLAYER_PATH = '/player';
 
 const isPlayerRoute = (path) => path?.includes(PLAYER_PATH);
 
+const defaultHeaderTitle = "Beta cerrada";
+
 const Header = ({ state }) => {
   const posthog = usePostHog();
   const navigate = useNavigate();
@@ -43,6 +45,7 @@ const Header = ({ state }) => {
   const [opacity, setOpacity] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [headerTitle, setHeaderTitle] = useState(defaultHeaderTitle);
 
   // Debounced setDebouncedSearchTerm
   const debouncedSetSearchTerm = useCallback(
@@ -75,6 +78,7 @@ const Header = ({ state }) => {
 
     // Send special event when leaving player route
     if (wasPreviousPlayer && !isCurrentPlayer) {
+      setHeaderTitle(defaultHeaderTitle);
       posthog?.capture('exit_player', {
         from: '/player',
         to: currentPath
@@ -138,9 +142,9 @@ const Header = ({ state }) => {
 
     setIsMaximized(win.isMaximized());
 
-    win.addListener('maximize', handleMaximize);
-    win.addListener('unmaximize', handleUnmaximize);
-    win.addListener('resize', handleResize);
+    win.on('maximize', handleMaximize);
+    win.on('unmaximize', handleUnmaximize);
+    win.on('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -182,6 +186,16 @@ const Header = ({ state }) => {
       eventBus.off('historyUpdated', updateNavigationState);
     };
   }, []);
+
+  useEffect(() => {
+    const handleHeaderTitle = (newTitle) => {
+      if (isPlayerRoute(location.pathname)) {
+        setHeaderTitle(newTitle);
+      }
+    };
+
+    eventBus.on('headerTitle', handleHeaderTitle);
+  }, [location.pathname]);
 
   const handleBack = useCallback((e) => {
     e.preventDefault();
@@ -374,13 +388,18 @@ const Header = ({ state }) => {
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <div className="flex flex-col items-center" style={{ WebkitAppRegion: 'no-drag', zIndex: 9999 }}>
               <p onClick={handleHome} className="text-white font-bold text-2xl leading-none" style={{ cursor: canGoHome ? 'pointer' : 'default' }}>Animeton</p>
-              <span
-                onClick={isPlayerRoute(location.pathname) ? handleHome : handleClosedBeta}
-                className="text-zinc-400 text-xs mt-1 leading-none"
-                style={{ cursor: 'pointer' }}
-              >
-                {`Beta cerrada (${appVersion})`}
-              </span>
+              <div className="flex items-center gap-1">
+                <span
+                  onClick={isPlayerRoute(location.pathname) ? handleHome : handleClosedBeta}
+                  className="text-zinc-400 text-xs mt-1 leading-none"
+                  style={{ cursor: 'pointer' }}
+                >
+                  {headerTitle}
+                </span>
+                {!isPlayerRoute(location.pathname) && (
+                  <span className="text-zinc-500 text-xs mt-1">v{appVersion}</span>
+                )}
+              </div>
             </div>
           </div>
 
