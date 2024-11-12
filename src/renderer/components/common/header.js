@@ -42,6 +42,7 @@ const Header = ({ state }) => {
   const [canGoHome, setCanGoHome] = useState(false);
   const [isHome, setIsHome] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
+  const [updateDownloaded, setUpdateDownloaded] = useState(false);
   const [opacity, setOpacity] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -196,6 +197,14 @@ const Header = ({ state }) => {
     };
 
     eventBus.on('headerTitle', handleHeaderTitle);
+
+    const handleUpdateDownloaded = () => {
+      setUpdateDownloaded(true);
+      posthog?.capture('update_downloaded');
+    }
+
+    eventBus.on('updateDownloaded', handleUpdateDownloaded);
+
   }, [location.pathname]);
 
   const handleBack = useCallback((e) => {
@@ -443,6 +452,28 @@ const Header = ({ state }) => {
                   </>
                 )}
               </div>
+            )}
+
+            {updateDownloaded && (
+              <>
+                <Divider orientation="vertical" className="bg-zinc-800 h-6" />
+                <button
+                  onClick={() => eventBus.emit('modalOpen', 'updateDownloaded')}
+                  style={{ WebkitAppRegion: 'no-drag', zIndex: 9999 }}
+                  className="p-1 hover:bg-zinc-800 rounded"
+                >
+                  <Icon
+                    icon="gravity-ui:arrow-down-to-line"
+                    className="pointer-events-none text-[#17c964]"
+                    width="26"
+                    height="26"
+                    style={{
+                      color: '#17c964',
+                      filter: 'drop-shadow(0 0 2px #17c964)',
+                    }}
+                  />
+                </button>
+              </>
             )}
 
             <Divider orientation="vertical" className="bg-zinc-800 h-6" />

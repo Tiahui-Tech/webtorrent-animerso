@@ -112,11 +112,6 @@ function AppContent({ initialState, onUpdate }) {
     };
     eventBus.on('torrentUpdate', torrentUpdateHandler);
 
-    eventBus.on('updateDownloaded', () => {
-      setUpdateDownloadedModalOpen(true);
-      posthog?.capture('update_downloaded');
-    });
-
     eventBus.on('modalOpen', (modalId) => {
       switch (modalId) {
         case 'closedBeta':
@@ -124,6 +119,9 @@ function AppContent({ initialState, onUpdate }) {
           break;
         case 'discordTicket':
           setDiscordTicketModalOpen(true);
+          break;
+        case 'updateDownloaded':
+          setUpdateDownloadedModalOpen(true);
           break;
       }
     });

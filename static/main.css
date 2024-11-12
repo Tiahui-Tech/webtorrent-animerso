@@ -3937,6 +3937,11 @@ video {
   color: hsl(var(--nextui-danger) / var(--nextui-danger-opacity, var(--tw-text-opacity))) !important;
 }
 
+.text-\[\#17c964\] {
+  --tw-text-opacity: 1;
+  color: rgb(23 201 100 / var(--tw-text-opacity));
+}
+
 .text-background {
   --tw-text-opacity: 1;
   color: hsl(var(--nextui-background) / var(--nextui-background-opacity, var(--tw-text-opacity)));
