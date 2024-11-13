@@ -29,7 +29,6 @@ app.setAppUserModelId(config.APP_ID)
 
 // allow electron/chromium to play startup sounds (without user interaction)
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
-app.commandLine.appendSwitch('enable-features', 'PlatformHEVCDecoderSupport,PlatformEncryptedHevcDecoderSupport')
 
 // Enable media codecs and hardware acceleration
 app.commandLine.appendSwitch('enable-features', 'PlatformHEVCDecoderSupport,PlatformEncryptedHevcDecoderSupport')
