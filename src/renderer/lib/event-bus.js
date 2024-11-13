@@ -5,6 +5,7 @@ const GLOBAL_EVENT = '__GLOBAL_EVENT__';
 class EventBusWrapper {
     constructor() {
         this._emitter = new EventEmitter();
+        this._emitter.setMaxListeners(50);
         this._handlers = new Map();
     }
 

@@ -28,7 +28,6 @@ const { anitomyscript } = require('../../modules/anime');
 // Shows a streaming video player. Standard features + Chromecast + Airplay
 function Player({ state, currentTorrent }) {
   const location = useLocation();
-  const navigate = useNavigate();
   const { fetchSubtitles, subtitles: apiSubtitles, isLoading: isFetchingSubtitles } = useApiSubtitles(currentTorrent?.infoHash);
   const [isMouseMoving, setIsMouseMoving] = useState(true);
   const [localSubtitles, setLocalSubtitles] = useState({ infoHash: null, tracks: [] });
@@ -241,12 +240,7 @@ function Player({ state, currentTorrent }) {
 
     // Subscribe to subtitle update event
     eventBus.on('subtitlesUpdate', handleSubtitlesUpdate);
-
-    // Cleanup: unsubscribe from event
-    return () => eventBus.off('subtitlesUpdate', handleSubtitlesUpdate);
   }, [
-    location,
-    navigate,
     subtitlesExist,
     maxSubLength,
     tracksAreFromActualTorrent,
@@ -276,7 +270,7 @@ function Player({ state, currentTorrent }) {
       };
     }
 
-    const MAX_ATTEMPTS = 16;
+    const MAX_ATTEMPTS = 30;
     if (attempts < MAX_ATTEMPTS) {
       console.log(`Checking subtitles (attempt ${attempts + 1} of ${MAX_ATTEMPTS})`);
 
@@ -287,15 +281,13 @@ function Player({ state, currentTorrent }) {
       if (maxLength > 0) {
         lastThreeLengths.push(maxLength);
         if (lastThreeLengths.length > 3) {
-          lastThreeLengths.shift(); // Keep only the last 3
+          lastThreeLengths.shift();
         }
       }
 
-      // Check if the last 3 lengths are equal
       const hasThreeEqualLengths = lastThreeLengths.length === 3 &&
         lastThreeLengths.every(length => length === lastThreeLengths[0]);
 
-      // Check if more subtitle checks are needed
       const needsMoreChecks = attempts >= 8
         ? (!exist || maxLength < 300 || !matchCurrentTorrent || !hasThreeEqualLengths)
         : true;
@@ -303,7 +295,12 @@ function Player({ state, currentTorrent }) {
       sendNotification(state, { title: `Subtítulos`, message: `Buscando... Intento: ${attempts + 1}/${MAX_ATTEMPTS}`, type: 'debug' })
 
       if (needsMoreChecks) {
-        const timeoutId = setTimeout(checkForSubtitles, 10000);
+        // Dynamic timeout based on attempt number
+        const timeout = attempts <= 5 ? 10000 : // First 5 attempts: 10 seconds
+                       attempts <= 10 ? 30000 : // Attempts 6-10: 30 seconds 
+                       60000; // Attempts 11-16: 60 seconds
+
+        const timeoutId = setTimeout(checkForSubtitles, timeout);
         subtitleCheckRef.current.timeoutId = timeoutId;
       } else {
         setAllSubtitlesFound(true);
