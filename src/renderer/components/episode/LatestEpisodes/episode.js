@@ -28,6 +28,7 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }) => {
     anime?.coverImage?.extraLarge;
 
   const episodeDuration = anime?.duration || anime?.episode?.runtime || anime?.episode?.length
+  const episodeTorrentLink = anime?.torrent?.link.toLowerCase();
 
   const episode = anime?.episode;
 
@@ -67,7 +68,16 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }) => {
                 {`Episodio ${anime?.torrent?.episode || anime?.episode?.episodeNumber || anime?.episode?.episode || '??'}`}
               </span>
             </div>
-            {anime?.torrent?.link.includes('(NF)') && (
+            {episodeTorrentLink.includes('hevc') && <Tooltip content="Cargará hasta 3 veces más rápido por usar el códec HEVC" className="bg-zinc-900 text-white" >
+              <Icon
+                icon="akar-icons:thunder"
+                width="26"
+                height="26"
+                style={{ color: 'white' }}
+                className="ml-2 flex-shrink-0"
+              />
+            </Tooltip>}
+            {episodeTorrentLink.includes('(nf)') && (
               <Tooltip content="Netflix Subs" className="bg-zinc-900 text-white" >
                 <Icon
                   icon="streamline:netflix"
@@ -78,6 +88,7 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }) => {
                 />
               </Tooltip>
             )}
+
           </div>
         </CardHeader>
         <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}>

@@ -12,6 +12,7 @@ const Episode = memo(({ anime, isLoading, onPlay }) => {
     anime?.coverImage?.extraLarge;
 
   const episodeDuration = anime?.duration || anime?.episode?.runtime || anime?.episode?.length
+  const episodeTorrentLink = anime?.torrent?.link.toLowerCase();
 
   const episode = anime?.episode;
 
@@ -19,6 +20,12 @@ const Episode = memo(({ anime, isLoading, onPlay }) => {
     e.preventDefault();
     onPlay(episode);
   }
+
+  const handleAnimeClick = () => {
+    navigate(`/anime/${anime.idAnilist}`, {
+      state: { title: anime.title.romaji }
+    });
+  };
 
   return (
     <div className="inline-block" style={{ width: 'min-content' }}>
@@ -35,7 +42,16 @@ const Episode = memo(({ anime, isLoading, onPlay }) => {
           <div className="absolute inset-0 flex items-center justify-center opacity-0 transition duration-300 ease-in-out shadow-current hover:opacity-50 z-10">
             <Icon icon="gravity-ui:play-fill" className="pointer-events-none" width="64" height="64" style={{ color: '#000' }} />
           </div>
-          {anime?.torrent?.link.includes('(NF)') && (
+          {episodeTorrentLink.includes('hevc') && <Tooltip content="Cargará hasta 3 veces más rápido por usar el códec HEVC" className="bg-zinc-900 text-white" >
+            <Icon
+              icon="akar-icons:thunder"
+              width="26"
+              height="26"
+              style={{ color: 'white' }}
+              className="absolute top-2 left-2 z-20"
+            />
+          </Tooltip>}
+          {episodeTorrentLink.includes('(nf)') && (
             <Tooltip content="Netflix Subs" className="bg-zinc-900 text-white" >
               <Icon
                 icon="streamline:netflix"
@@ -62,7 +78,7 @@ const Episode = memo(({ anime, isLoading, onPlay }) => {
           )}
         </div>
         <div className="flex flex-row justify-between mt-1 overflow-hidden">
-          <p className="text-base text-left font-medium truncate flex-grow min-w-0">
+          <p className="text-base text-left font-medium truncate flex-grow min-w-0" onClick={handleAnimeClick}>
             {`${anime?.title?.romaji}`}
           </p>
           {episodeDuration && (

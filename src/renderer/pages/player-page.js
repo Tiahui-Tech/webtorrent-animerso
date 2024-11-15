@@ -23,7 +23,7 @@ const { sendNotification } = require('../lib/errors');
 const Spinner = require('../components/common/spinner');
 const VideoSpinner = require('../components/common/video-spinner');
 
-const { anitomyscript } = require('../../modules/anime');
+const anitomyscript = require('anitomyscript');
 
 // Shows a streaming video player. Standard features + Chromecast + Airplay
 function Player({ state, currentTorrent }) {
