@@ -100,8 +100,8 @@ function Player({ state, currentTorrent }) {
     const getAnimeInfo = async () => {
       const anitomyData = await anitomyscript(currentTorrent.name);
       return {
-        animeName: anitomyData[0].anime_title,
-        episodeNumber: Number(anitomyData[0].episode_number) || null
+        animeName: anitomyData.anime_title,
+        episodeNumber: Number(anitomyData.episode_number) || null
       };
     };
 
@@ -128,7 +128,6 @@ function Player({ state, currentTorrent }) {
         title = `${title} - E${episodeNumber}`;
       }
 
-      console.log('headerTitle emit', title);
       eventBus.emit('headerTitle', title);
     };
 
@@ -137,13 +136,19 @@ function Player({ state, currentTorrent }) {
       updateHeaderTitle(animeInfo);
 
       if (currentTorrent && isTorrentReady && rpcFrame) {
-        console.log('updateDiscordRPC', { 
+        console.log('rpcAndTitle: Updating Discord RPC with state:', { 
           currentTorrent, 
           isPaused: state.playing.isPaused, 
           isTorrentReady, 
           rpcFrame 
         });
         updateDiscordRPC(animeInfo);
+      } else {
+        console.log('rpcAndTitle: Skipping Discord RPC update, missing requirements:', {
+          hasTorrent: !!currentTorrent,
+          isTorrentReady,
+          hasRpcFrame: !!rpcFrame
+        });
       }
     };
 

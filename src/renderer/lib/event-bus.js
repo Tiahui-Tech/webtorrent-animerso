@@ -20,11 +20,6 @@ class EventBusWrapper {
     }
 
     on(event, handler) {
-        if (this._shouldLog(event)) {
-            eLog.info(`EventBus: On "${event}"`);
-            console.log(`EventBus: On "${event}"`);
-        }
-
         if (!this._handlers.has(event)) {
             this._handlers.set(event, new Set());
         }
@@ -32,7 +27,9 @@ class EventBusWrapper {
 
         this._emitter.on(GLOBAL_EVENT, (eventName, ...args) => {
             if (eventName === event) {
-                eLog.debug(`EventBus: Handling event "${event}" with args:`, ...args);
+                if (this._shouldLog(event)) {
+                    eLog.debug(`EventBus: On "${event}":`, ...args);
+                }
                 handler(...args);
             }
         });
