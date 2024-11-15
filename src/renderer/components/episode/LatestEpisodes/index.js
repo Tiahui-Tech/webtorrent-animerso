@@ -1,7 +1,10 @@
 const React = require('react');
-const { useState, useEffect } = React;
+const { useState, useEffect, useCallback, useMemo } = React;
+const { Icon } = require('@iconify/react');
+const { motion, AnimatePresence } = require('framer-motion');
 const useRSSData = require('../../../hooks/useRSSData');
 const useModernBackground = require('../../../hooks/useModernBackground');
+const usePagination = require('../../../hooks/usePagination');
 
 const TorrentPlayer = require('../../../lib/torrent-player');
 const { sendNotification } = require('../../../lib/errors');
@@ -11,19 +14,33 @@ const EpisodeCardSkeleton = require('./skeleton');
 
 const LatestEpisodes = React.memo(({ state, sectionTitle }) => {
   const [loadingEpisodeId, setLoadingEpisodeId] = useState(null);
-
+  
   const { rssAnimes, isLoading, error } = useRSSData({
     state,
     page: 1,
-    perPage: 10,
-    displayCount: 8,
+    perPage: 24,
     emptyState: false
   });
+
+  const {
+    currentPage,
+    direction,
+    hasMore,
+    handlePrev,
+    handleNext
+  } = usePagination(rssAnimes?.length || 0);
+
+  const displayEpisodes = useMemo(() => {
+    if (!rssAnimes) return null;
+    const startIndex = (currentPage - 1) * 8;
+    return rssAnimes.slice(startIndex, startIndex + 8);
+  }, [rssAnimes, currentPage]);
+
   const background = useModernBackground({
     primaryColor: '#63e8ff',
     secondaryColor: '#ff9af7',
     disablePattern: true,
-    opacity: 0.3
+    opacity: 0.6
   });
 
   useEffect(() => {
@@ -46,8 +63,23 @@ const LatestEpisodes = React.memo(({ state, sectionTitle }) => {
     TorrentPlayer.playTorrent(anime, state, setLoadingEpisodeId);
   };
 
+  const slideVariants = {
+    enter: (direction) => ({
+      transform: `translateX(${direction > 0 ? 100 : -100}%)`,
+      opacity: 0
+    }),
+    center: {
+      transform: 'translateX(0%)',
+      opacity: 1
+    },
+    exit: (direction) => ({
+      transform: `translateX(${direction < 0 ? 100 : -100}%)`,
+      opacity: 0
+    })
+  };
+
   return (
-    <div className="relative flex flex-col py-8 px-6 justify-center items-center bg-black">
+    <div className="relative flex flex-col py-8 justify-center items-center bg-black">
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
@@ -57,19 +89,68 @@ const LatestEpisodes = React.memo(({ state, sectionTitle }) => {
         }}
       />
       <h2 className="relative text-2xl font-bold mb-4 px-8">{sectionTitle}</h2>
-      <div className={`grid grid-cols-4 auto-cols-max gap-4 justify-center items-center ${error ? 'min-h-[300px]' : 'min-h-[700px]'} w-full`}>
-        {isLoading
-          ? Array.from({ length: 8 }).map((_, i) => (
-            <EpisodeCardSkeleton key={i} />
-          ))
-          : rssAnimes.map((anime, i) => (
-            <EpisodeCard
-              key={i}
-              anime={anime}
-              isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
-              onPlay={() => handlePlay(anime)}
+      
+      <div className="relative w-full">
+        <AnimatePresence mode="wait" initial={false} custom={direction}>
+          <motion.div
+            key={currentPage}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              transform: { duration: 0.2, ease: 'easeOut' },
+              opacity: { duration: 0.1 }
+            }}
+            className="grid grid-cols-4 auto-cols-max gap-4 px-12 justify-center items-center min-h-[700px] w-full"
+          >
+            {isLoading || !displayEpisodes
+              ? Array.from({ length: 8 }).map((_, i) => (
+                <EpisodeCardSkeleton key={i} />
+              ))
+              : displayEpisodes.map((anime, i) => (
+                <EpisodeCard
+                  key={i}
+                  anime={anime}
+                  isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
+                  onPlay={() => handlePlay(anime)}
+                />
+              ))}
+          </motion.div>
+        </AnimatePresence>
+
+        {currentPage > 1 && (
+          <button
+            className="absolute left-0 top-1/2 transform -translate-y-1/2 text-4xl px-4 h-full group"
+            onClick={handlePrev}
+            disabled={isLoading}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-black to-transparent opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-50" />
+            <Icon
+              className="relative pointer-events-none text-white opacity-30 group-hover:opacity-100 transition-opacity duration-300"
+              icon="gravity-ui:chevron-left"
+              width="72"
+              height="72"
             />
-          ))}
+          </button>
+        )}
+
+        {(!isLoading && hasMore) && (
+          <button
+            className="absolute right-0 top-1/2 transform -translate-y-1/2 text-4xl px-4 h-full group"
+            onClick={handleNext}
+            disabled={isLoading}
+          >
+            <div className="absolute inset-0 bg-gradient-to-l from-black to-transparent opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-50" />
+            <Icon
+              className="relative pointer-events-none text-white opacity-30 group-hover:opacity-100 transition-opacity duration-300"
+              icon="gravity-ui:chevron-right"
+              width="72"
+              height="72"
+            />
+          </button>
+        )}
       </div>
     </div>
   );

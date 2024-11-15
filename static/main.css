@@ -1991,10 +1991,6 @@ video {
   min-height: 2rem;
 }
 
-.min-h-\[300px\] {
-  min-height: 300px;
-}
-
 .min-h-\[32px\] {
   min-height: 32px;
 }

@@ -9,11 +9,11 @@ const ERROR_MESSAGE = 'No se encontraron los ultimos episodios';
 // Global cache object
 const cache = {};
 
-const useRSSData = ({ page, perPage, displayCount, emptyState }) => {
-  const [rssAnimes, setRSSAnimes] = useState(emptyState ? Array.from({ length: displayCount }) : null);
+const useRSSData = ({ page, perPage, emptyState }) => {
+  const [rssAnimes, setRSSAnimes] = useState(emptyState ? Array.from({ length: perPage }) : null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const cacheKey = useRef(`${page}-${perPage}-${displayCount}`);
+  const cacheKey = useRef(`${page}-${perPage}`);
   const previousDataRef = useRef(null);
 
   const fetchRSSAnimes = useCallback(async (bypassCache = false) => {
@@ -41,14 +41,13 @@ const useRSSData = ({ page, perPage, displayCount, emptyState }) => {
       }
 
       if (rssAnimesData.length > 1) {
-        const slicedRssAnimes = rssAnimesData.slice(0, displayCount);
         // Only update state if the new data is different from the previous data
-        if (JSON.stringify(slicedRssAnimes) !== JSON.stringify(previousDataRef.current)) {
+        if (JSON.stringify(rssAnimesData) !== JSON.stringify(previousDataRef.current)) {
           setIsLoading(true);
-          setRSSAnimes(slicedRssAnimes);
-          previousDataRef.current = slicedRssAnimes;
+          setRSSAnimes(rssAnimesData);
+          previousDataRef.current = rssAnimesData;
           // Update the cache with the new data
-          cache[cacheKey.current] = { data: slicedRssAnimes, timestamp: now };
+          cache[cacheKey.current] = { data: rssAnimesData, timestamp: now };
           setIsLoading(false);
         }
         return true;
@@ -58,7 +57,7 @@ const useRSSData = ({ page, perPage, displayCount, emptyState }) => {
       setError(error.message);
       return false;
     }
-  }, [page, perPage, displayCount]);
+  }, [page, perPage]);
 
   useEffect(() => {
     let intervalId;
