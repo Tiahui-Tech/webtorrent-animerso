@@ -79,7 +79,7 @@ const LatestEpisodes = React.memo(({ state, sectionTitle }) => {
   };
 
   return (
-    <div className="relative flex flex-col py-8 justify-center items-center bg-black">
+    <div className="relative flex flex-col py-6">
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
@@ -88,9 +88,9 @@ const LatestEpisodes = React.memo(({ state, sectionTitle }) => {
           WebkitMaskImage: 'linear-gradient(to top, black 70%, transparent)'
         }}
       />
-      <h2 className="relative text-2xl font-bold mb-4 px-8">{sectionTitle}</h2>
+      <h2 className="relative text-2xl font-bold mb-6 px-8 text-center">{sectionTitle}</h2>
       
-      <div className="relative w-full">
+      <div className="relative mx-auto w-full max-w-[90%]">
         <AnimatePresence mode="wait" initial={false} custom={direction}>
           <motion.div
             key={currentPage}
@@ -103,7 +103,7 @@ const LatestEpisodes = React.memo(({ state, sectionTitle }) => {
               transform: { duration: 0.2, ease: 'easeOut' },
               opacity: { duration: 0.1 }
             }}
-            className="grid grid-cols-4 auto-cols-max gap-4 px-12 justify-center items-center min-h-[700px] w-full"
+            className="grid grid-cols-4 gap-6 w-full place-items-center"
           >
             {isLoading || !displayEpisodes
               ? Array.from({ length: 8 }).map((_, i) => (
@@ -122,32 +122,26 @@ const LatestEpisodes = React.memo(({ state, sectionTitle }) => {
 
         {currentPage > 1 && (
           <button
-            className="absolute left-0 top-1/2 transform -translate-y-1/2 text-4xl px-4 h-full group"
+            className="absolute -left-16 top-1/2 transform -translate-y-1/2 transition-opacity duration-300 hover:opacity-100 opacity-50"
             onClick={handlePrev}
             disabled={isLoading}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-black to-transparent opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-50" />
             <Icon
-              className="relative pointer-events-none text-white opacity-30 group-hover:opacity-100 transition-opacity duration-300"
               icon="gravity-ui:chevron-left"
-              width="72"
-              height="72"
+              className="w-16 h-16 pointer-events-none"
             />
           </button>
         )}
 
         {(!isLoading && hasMore) && (
           <button
-            className="absolute right-0 top-1/2 transform -translate-y-1/2 text-4xl px-4 h-full group"
+            className="absolute -right-16 top-1/2 transform -translate-y-1/2 transition-opacity duration-300 hover:opacity-100 opacity-50"
             onClick={handleNext}
             disabled={isLoading}
           >
-            <div className="absolute inset-0 bg-gradient-to-l from-black to-transparent opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-50" />
             <Icon
-              className="relative pointer-events-none text-white opacity-30 group-hover:opacity-100 transition-opacity duration-300"
               icon="gravity-ui:chevron-right"
-              width="72"
-              height="72"
+              className="w-16 h-16 pointer-events-none"
             />
           </button>
         )}
