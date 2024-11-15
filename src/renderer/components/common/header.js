@@ -2,7 +2,6 @@ const React = require('react');
 const { useState, useEffect, useCallback, useRef } = require('react');
 const { usePostHog } = require('posthog-js/react');
 const {
-  useNavigate,
   useLocation,
 } = require('react-router-dom');
 
@@ -22,13 +21,14 @@ const PLAYER_PATH = '/player';
 
 const isPlayerRoute = (path) => path?.includes(PLAYER_PATH);
 
-const defaultHeaderTitle = "Beta cerrada";
+const useWindowControls = require('../../hooks/useWindowControls');
+const useHeaderNavigation = require('../../hooks/useHeaderNavigation');
+const useHeaderTitle = require('../../hooks/useHeaderTitle');
+const useUpdateDownload = require('../../hooks/useUpdateDownload');
 
 const Header = ({ state }) => {
   const posthog = usePostHog();
-  const navigate = useNavigate();
   const location = useLocation();
-  const historyRef = useRef({ past: [], current: null, future: [] });
   const identifySentRef = useRef(false);
 
   const appIsActivated = state?.saved?.activation?.key
@@ -37,16 +37,26 @@ const Header = ({ state }) => {
 
   const { data: userData, isLoading: isLoadingUserData } = useDiscordUser(appUserDiscordId);
 
-  const [canGoBack, setCanGoBack] = useState(false);
-  const [canGoForward, setCanGoForward] = useState(false);
-  const [canGoHome, setCanGoHome] = useState(false);
-  const [isHome, setIsHome] = useState(false);
-  const [isMaximized, setIsMaximized] = useState(false);
-  const [updateDownloaded, setUpdateDownloaded] = useState(false);
+  const { isMaximized, handleWindowControl } = useWindowControls();
+  const {
+    canGoBack,
+    canGoForward,
+    canGoHome,
+    isHome,
+    handleBack,
+    handleForward,
+    handleHome,
+    currentPath,
+    searchTerm,
+    setSearchTerm
+  } = useHeaderNavigation();
+  
+  const isPlayerPath = isPlayerRoute(currentPath);
+  const { headerTitle } = useHeaderTitle(isPlayerPath);
+  const { updateDownloaded, handleUpdateClick } = useUpdateDownload();
+
   const [opacity, setOpacity] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [headerTitle, setHeaderTitle] = useState(defaultHeaderTitle);
 
   // Debounced setDebouncedSearchTerm
   const debouncedSetSearchTerm = useCallback(
@@ -71,82 +81,6 @@ const Header = ({ state }) => {
       identifySentRef.current = true;
     }
   }, [userData]);
-
-  useEffect(() => {
-    const currentPath = location.pathname;
-    const isCurrentPlayer = isPlayerRoute(currentPath);
-    const wasPreviousPlayer = isPlayerRoute(historyRef.current.current);
-
-    // Send special event when leaving player route
-    if (wasPreviousPlayer && !isCurrentPlayer) {
-      setHeaderTitle(defaultHeaderTitle);
-      posthog?.capture('exit_player', {
-        from: '/player',
-        to: currentPath
-      });
-    }
-
-    // Only update history if:
-    // 1. It's a new route different from the current one
-    // 2. We're not navigating between player routes
-    if (historyRef.current.current !== currentPath && !(isCurrentPlayer && wasPreviousPlayer)) {
-      if (historyRef.current.current) {
-        historyRef.current.past.push(historyRef.current.current);
-      }
-      historyRef.current.current = currentPath;
-
-      // Clear the future only if it's not a player route
-      if (!isCurrentPlayer) {
-        historyRef.current.future = [];
-      }
-
-      // Track route change
-      posthog?.capture('route_changed', {
-        from: historyRef.current.past[historyRef.current.past.length - 1] || null,
-        to: currentPath,
-        method: 'navigation'
-      });
-    }
-    // Update navigation states
-    // A player route doesn't count for forward navigation
-    setCanGoBack(historyRef.current.past.length > 0);
-    setCanGoForward(historyRef.current.future.length > 0 && !isPlayerRoute(historyRef.current.future[0]));
-    setIsHome(currentPath === '/');
-
-    // Debug logging
-    console.log('History state:', {
-      past: historyRef.current.past,
-      current: historyRef.current.current,
-      future: historyRef.current.future
-    });
-  }, [location]);
-
-  useEffect(() => {
-    const currentPath = location.pathname;
-    setCanGoHome(currentPath !== '/' || searchTerm);
-  }, [location, searchTerm]);
-
-  useEffect(() => {
-    let win;
-    try {
-      win = remote.getCurrentWindow();
-    } catch (error) {
-      console.error('Error getting window reference:', error);
-      return;
-    }
-
-    const handleMaximize = () => setIsMaximized(true);
-    const handleUnmaximize = () => setIsMaximized(false);
-    const handleResize = () => {
-      if (win) setIsMaximized(win.isMaximized());
-    };
-
-    setIsMaximized(win.isMaximized());
-
-    win.on('maximize', handleMaximize);
-    win.on('unmaximize', handleUnmaximize);
-    win.on('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     if (location.pathname.includes('player')) {
@@ -176,109 +110,6 @@ const Header = ({ state }) => {
     }
   }, [debouncedSearchTerm, isHome]);
 
-  useEffect(() => {
-    const updateNavigationState = () => {
-      setCanGoBack(historyRef.current.past.length > 0);
-      setCanGoForward(historyRef.current.future.length > 0 && !isPlayerRoute(historyRef.current.future[0]));
-    };
-
-    updateNavigationState();
-    return () => {
-      eventBus.off('historyUpdated', updateNavigationState);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleHeaderTitle = (newTitle) => {
-      console.log('headerTitle on', newTitle);
-      if (isPlayerRoute(location.pathname)) {
-        setHeaderTitle(newTitle);
-      }
-    };
-
-    eventBus.on('headerTitle', handleHeaderTitle);
-
-    const handleUpdateDownloaded = () => {
-      setUpdateDownloaded(true);
-      posthog?.capture('update_downloaded');
-    }
-
-    eventBus.on('updateDownloaded', handleUpdateDownloaded);
-
-  }, [location.pathname]);
-
-  const handleBack = useCallback((e) => {
-    e.preventDefault();
-    if (historyRef.current.past.length > 0) {
-      let prevPage;
-      const currentIsPlayer = isPlayerRoute(historyRef.current.current);
-
-      if (currentIsPlayer) {
-        do {
-          prevPage = historyRef.current.past.pop();
-        } while (isPlayerRoute(prevPage) && historyRef.current.past.length > 0);
-      } else {
-        prevPage = historyRef.current.past.pop();
-      }
-
-      if (prevPage && !isPlayerRoute(prevPage)) {
-        historyRef.current.future.unshift(historyRef.current.current);
-        historyRef.current.current = prevPage;
-        navigate(prevPage);
-
-        // Track back navigation
-        posthog?.capture('route_changed', {
-          from: historyRef.current.current,
-          to: prevPage,
-          method: 'back_button'
-        });
-
-        eventBus.emit('historyUpdated');
-      }
-    }
-  }, [navigate]);
-
-  const handleForward = useCallback((e) => {
-    e.preventDefault();
-    if (historyRef.current.future.length > 0) {
-      let nextPage;
-
-      do {
-        nextPage = historyRef.current.future.shift();
-      } while (isPlayerRoute(nextPage) && historyRef.current.future.length > 0);
-
-      if (nextPage && !isPlayerRoute(nextPage)) {
-        historyRef.current.past.push(historyRef.current.current);
-        historyRef.current.current = nextPage;
-        navigate(nextPage);
-
-        // Track forward navigation
-        posthog?.capture('route_changed', {
-          from: historyRef.current.past[historyRef.current.past.length - 1],
-          to: nextPage,
-          method: 'forward_button'
-        });
-
-        eventBus.emit('historyUpdated');
-      }
-    }
-  }, [navigate]);
-
-  const handleHome = useCallback(() => {
-    if (!canGoHome) return;
-
-    const resetSearch = () => {
-      setDebouncedSearchTerm('');
-      setSearchTerm('');
-    };
-
-    if (!isHome) {
-      navigate('/');
-    }
-
-    resetSearch();
-  }, [canGoHome, isHome, navigate, setDebouncedSearchTerm, setSearchTerm]);
-
   const handleClosedBeta = () => {
     eventBus.emit('modalOpen', 'closedBeta');
   }
@@ -286,40 +117,6 @@ const Header = ({ state }) => {
   const startDrag = (e) => {
     if (e.button !== 0) return;
     ipcRenderer.send('dragWindow');
-  };
-
-  const handleWindowControl = (action) => (e) => {
-    e.stopPropagation();
-
-    const win = remote.getCurrentWindow();
-    if (!win) return;
-
-    try {
-      switch (action) {
-        case 'minimize':
-          win.minimize();
-          break;
-        case 'maximize':
-          if (win.isFullScreen()) {
-            win.setFullScreen(false);
-            setTimeout(() => {
-              if (win.isFullScreen()) {
-                win.maximize();
-              }
-            }, 100);
-          } else if (win.isMaximized()) {
-            win.unmaximize();
-          } else {
-            win.maximize();
-          }
-          break;
-        case 'close':
-          win.close();
-          break;
-      }
-    } catch (error) {
-      console.error(`Error executing window action ${action}:`, error);
-    }
   };
 
   return (
@@ -400,13 +197,13 @@ const Header = ({ state }) => {
               <p onClick={handleHome} className="text-white font-bold text-2xl leading-none" style={{ cursor: canGoHome ? 'pointer' : 'default' }}>Animeton</p>
               <div className="flex items-center gap-1">
                 <span
-                  onClick={isPlayerRoute(location.pathname) ? handleHome : handleClosedBeta}
+                  onClick={isPlayerRoute(currentPath) ? handleHome : handleClosedBeta}
                   className="text-zinc-400 text-xs mt-1 leading-none"
                   style={{ cursor: 'pointer' }}
                 >
                   {headerTitle}
                 </span>
-                {!isPlayerRoute(location.pathname) && (
+                {!isPlayerRoute(currentPath) && (
                   <span onClick={handleClosedBeta} className="text-zinc-500 text-xs mt-1 cursor-pointer">v{appVersion}</span>
                 )}
               </div>
@@ -458,7 +255,7 @@ const Header = ({ state }) => {
               <>
                 <Divider orientation="vertical" className="bg-zinc-800 h-6" />
                 <button
-                  onClick={() => eventBus.emit('modalOpen', 'updateDownloaded')}
+                  onClick={handleUpdateClick}
                   style={{ WebkitAppRegion: 'no-drag', zIndex: 9999 }}
                   className="p-1 hover:bg-zinc-800 rounded"
                 >

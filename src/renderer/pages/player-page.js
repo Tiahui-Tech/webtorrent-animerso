@@ -2,7 +2,7 @@
 
 const React = require('react');
 const { useEffect, useState, useRef, useCallback } = React;
-const { useLocation, useNavigate } = require('react-router-dom');
+const { useLocation } = require('react-router-dom');
 const { AnimatePresence, motion } = require('framer-motion');
 
 const remote = require('@electron/remote')
