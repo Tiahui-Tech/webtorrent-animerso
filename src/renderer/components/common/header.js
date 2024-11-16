@@ -50,9 +50,8 @@ const Header = ({ state }) => {
     searchTerm,
     setSearchTerm
   } = useHeaderNavigation();
-  
-  const isPlayerPath = isPlayerRoute(currentPath);
-  const { headerTitle } = useHeaderTitle(isPlayerPath);
+
+  const { headerTitle } = useHeaderTitle();
   const { updateDownloaded, handleUpdateClick } = useUpdateDownload();
 
   const [opacity, setOpacity] = useState(1);
@@ -203,9 +202,7 @@ const Header = ({ state }) => {
                 >
                   {headerTitle}
                 </span>
-                {!isPlayerRoute(currentPath) && (
-                  <span onClick={handleClosedBeta} className="text-zinc-500 text-xs mt-1 cursor-pointer">v{appVersion}</span>
-                )}
+                <span onClick={isPlayerRoute(currentPath) ? handleHome : handleClosedBeta} className="text-zinc-500 text-xs mt-1 cursor-pointer">v{appVersion}</span>
               </div>
             </div>
           </div>

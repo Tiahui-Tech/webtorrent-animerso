@@ -8,162 +8,168 @@ const HOME_PATH = '/';
 const defaultHeaderTitle = "Beta cerrada";
 const isPlayerRoute = (path) => path?.includes(PLAYER_PATH);
 
-function useHeaderNavigation() {
-  const posthog = usePostHog();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const historyRef = useRef({ past: [], current: null, future: [] });
+const useHeaderNavigation = () => {
+    const posthog = usePostHog();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const historyRef = useRef({ past: [], current: null, future: [] });
 
-  const [canGoBack, setCanGoBack] = useState(false);
-  const [canGoForward, setCanGoForward] = useState(false);
-  const [canGoHome, setCanGoHome] = useState(false);
-  const [isHome, setIsHome] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+    const [canGoBack, setCanGoBack] = useState(false);
+    const [canGoForward, setCanGoForward] = useState(false);
+    const [canGoHome, setCanGoHome] = useState(false);
+    const [isHome, setIsHome] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
-  // Navigation state management
-  useEffect(() => {
-    const currentPath = location.pathname;
-    const isCurrentPlayer = isPlayerRoute(currentPath);
-    const wasPreviousPlayer = isPlayerRoute(historyRef.current.current);
+    // Navigation state management
+    useEffect(() => {
+        const currentPath = location.pathname;
+        const isCurrentPlayer = isPlayerRoute(currentPath);
+        const wasPreviousPlayer = isPlayerRoute(historyRef.current.current);
 
-    // Handle player exit
-    if (wasPreviousPlayer && !isCurrentPlayer) {
-      eventBus.emit('headerTitle', defaultHeaderTitle);
-      posthog?.capture('exit_player', {
-        from: '/player',
-        to: currentPath
-      });
-    }
+        // Send special event when leaving player route
+        if (wasPreviousPlayer && !isCurrentPlayer) {
+            posthog?.capture('exit_player', {
+                from: '/player',
+                to: currentPath
+            });
+        }
 
-    if (historyRef.current.current !== currentPath && !(isCurrentPlayer && wasPreviousPlayer)) {
-      if (historyRef.current.current) {
-        historyRef.current.past.push(historyRef.current.current);
-      }
-      historyRef.current.current = currentPath;
+        // Only update history if:
+        // 1. It's a new route different from the current one
+        // 2. We're not navigating between player routes
+        if (historyRef.current.current !== currentPath && !(isCurrentPlayer && wasPreviousPlayer)) {
+            if (historyRef.current.current) {
+                historyRef.current.past.push(historyRef.current.current);
+            }
+            historyRef.current.current = currentPath;
 
-      if (!isCurrentPlayer) {
-        historyRef.current.future = [];
-      }
+            // Clear the future only if it's not a player route
+            if (!isCurrentPlayer) {
+                historyRef.current.future = [];
+            }
 
-      posthog?.capture('route_changed', {
-        from: historyRef.current.past[historyRef.current.past.length - 1] || null,
-        to: currentPath,
-        method: 'navigation'
-      });
-    }
+            // Track route change
+            posthog?.capture('route_changed', {
+                from: historyRef.current.past[historyRef.current.past.length - 1] || null,
+                to: currentPath,
+                method: 'navigation'
+            });
+        }
+        // Update navigation states considering player routes
+        const lastNonPlayerPast = historyRef.current.past.findLast(path => !isPlayerRoute(path));
+        const firstNonPlayerFuture = historyRef.current.future.find(path => !isPlayerRoute(path));
 
-    updateNavigationState();
+        setCanGoBack(!!lastNonPlayerPast);
+        setCanGoForward(!!firstNonPlayerFuture);
+        setIsHome(currentPath === '/');
 
-    // Debug logging
-    console.log('History state:', {
-      past: historyRef.current.past,
-      current: historyRef.current.current,
-      future: historyRef.current.future
-    });
-  }, [location.pathname]);
+        // Update header title when not in player route
+        if (!isCurrentPlayer) {
+            eventBus.emit('headerTitle', defaultHeaderTitle);
+        }
 
-  // Update canGoHome based on both path and search
-  useEffect(() => {
-    setCanGoHome(location.pathname !== HOME_PATH || searchTerm);
-  }, [location.pathname, searchTerm]);
+        // Debug logging
+        console.log('History state:', {
+            past: historyRef.current.past,
+            current: historyRef.current.current,
+            future: historyRef.current.future
+        });
+    }, [location]);
 
-  // Separate navigation state update function
-  const updateNavigationState = useCallback(() => {
-    setCanGoBack(historyRef.current.past.length > 0);
-    setCanGoForward(historyRef.current.future.length > 0 && !isPlayerRoute(historyRef.current.future[0]));
-    setIsHome(location.pathname === HOME_PATH);
-  }, []);
+    // Update canGoHome based on both path and search
+    useEffect(() => {
+        const currentPath = location.pathname;
+        setCanGoHome(currentPath !== '/' || searchTerm);
+    }, [location.pathname, searchTerm]);
 
-  // Navigation handlers
-  const handleBack = useCallback((e) => {
-    e.preventDefault();
-    if (!canGoBack) return;
+    useEffect(() => {
+        const updateNavigationState = () => {
+            setCanGoBack(historyRef.current.past.length > 0);
+            setCanGoForward(historyRef.current.future.length > 0 && !isPlayerRoute(historyRef.current.future[0]));
+        };
 
-    let prevPage;
-    const currentIsPlayer = isPlayerRoute(historyRef.current.current);
+        updateNavigationState();
+        return () => {
+            eventBus.off('historyUpdated', updateNavigationState);
+        };
+    }, []);
 
-    if (currentIsPlayer) {
-      do {
-        prevPage = historyRef.current.past.pop();
-      } while (isPlayerRoute(prevPage) && historyRef.current.past.length > 0);
-    } else {
-      prevPage = historyRef.current.past.pop();
-    }
+    // Navigation handlers
+    const handleBack = useCallback((e) => {
+        e.preventDefault();
+        const lastNonPlayerPast = historyRef.current.past.findLast(path => !isPlayerRoute(path));
+        if (lastNonPlayerPast) {
+            // Remove all entries until we find the last non-player route
+            while (historyRef.current.past.length > 0 && historyRef.current.past[historyRef.current.past.length - 1] !== lastNonPlayerPast) {
+                historyRef.current.past.pop();
+            }
+            const prevPage = historyRef.current.past.pop();
 
-    if (prevPage && !isPlayerRoute(prevPage)) {
-      historyRef.current.future.unshift(historyRef.current.current);
-      historyRef.current.current = prevPage;
-      navigate(prevPage);
-      
-      posthog?.capture('route_changed', {
-        from: historyRef.current.current,
-        to: prevPage,
-        method: 'back_button'
-      });
+            historyRef.current.future.unshift(historyRef.current.current);
+            historyRef.current.current = prevPage;
+            navigate(prevPage);
 
-      eventBus.emit('historyUpdated');
-    }
-  }, [navigate, canGoBack]);
+            // Track back navigation
+            posthog?.capture('route_changed', {
+                from: historyRef.current.current,
+                to: prevPage,
+                method: 'back_button'
+            });
 
-  const handleForward = useCallback((e) => {
-    e.preventDefault();
-    if (!canGoForward) return;
+            eventBus.emit('historyUpdated');
+        }
+    }, [historyRef, navigate]);
 
-    let nextPage;
-    do {
-      nextPage = historyRef.current.future.shift();
-    } while (isPlayerRoute(nextPage) && historyRef.current.future.length > 0);
+    const handleForward = useCallback((e) => {
+        e.preventDefault();
+        const firstNonPlayerFuture = historyRef.current.future.find(path => !isPlayerRoute(path));
+        if (firstNonPlayerFuture) {
+            // Remove all entries until we find the first non-player route
+            while (historyRef.current.future.length > 0 && historyRef.current.future[0] !== firstNonPlayerFuture) {
+                historyRef.current.future.shift();
+            }
+            const nextPage = historyRef.current.future.shift();
 
-    if (nextPage && !isPlayerRoute(nextPage)) {
-      historyRef.current.past.push(historyRef.current.current);
-      historyRef.current.current = nextPage;
-      navigate(nextPage);
+            historyRef.current.past.push(historyRef.current.current);
+            historyRef.current.current = nextPage;
+            navigate(nextPage);
 
-      posthog?.capture('route_changed', {
-        from: historyRef.current.past[historyRef.current.past.length - 1],
-        to: nextPage,
-        method: 'forward_button'
-      });
+            // Track forward navigation
+            posthog?.capture('route_changed', {
+                from: historyRef.current.past[historyRef.current.past.length - 1],
+                to: nextPage,
+                method: 'forward_button'
+            });
 
-      eventBus.emit('historyUpdated');
-    }
-  }, [navigate, canGoForward]);
+            eventBus.emit('historyUpdated');
+        }
+    }, [historyRef, navigate]);
 
-  const handleHome = useCallback((e) => {
-    e?.preventDefault();
-    if (!canGoHome) return;
+    const handleHome = useCallback((e) => {
+        e?.preventDefault();
+        if (!canGoHome) return;
 
-    if (location.pathname !== HOME_PATH) {
-      historyRef.current.past.push(historyRef.current.current);
-      historyRef.current.current = HOME_PATH;
-      historyRef.current.future = [];
-      
-      navigate(HOME_PATH);
-      
-      posthog?.capture('route_changed', {
-        from: historyRef.current.past[historyRef.current.past.length - 1],
-        to: HOME_PATH,
-        method: 'home_button'
-      });
-    }
+        if (!isHome) {
+            navigate(HOME_PATH);
+        }
 
-    // Reset search state
-    setSearchTerm('');
-    eventBus.emit('searchTermChanged', '');
-  }, [navigate, canGoHome, location.pathname]);
+        // Reset search state
+        setSearchTerm('');
+        eventBus.emit('searchTermChanged', '');
+    }, [navigate, canGoHome, isHome, location.pathname]);
 
-  return {
-    canGoBack,
-    canGoForward,
-    canGoHome,
-    isHome,
-    handleBack,
-    handleForward,
-    handleHome,
-    currentPath: location.pathname,
-    searchTerm,
-    setSearchTerm
-  };
+    return {
+        canGoBack,
+        canGoForward,
+        canGoHome,
+        isHome,
+        handleBack,
+        handleForward,
+        handleHome,
+        currentPath: location.pathname,
+        searchTerm,
+        setSearchTerm
+    };
 }
 
 module.exports = useHeaderNavigation;
