@@ -56,7 +56,7 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }) => {
 
 
   return (
-    <div className="max-w-[400px] px-4">
+    <div className="max-w-[400px] px-2">
       <Card className="flex flex-col relative overflow-visible rounded-md border border-zinc-800">
         <CardHeader className="flex flex-col truncate items-start justify-start relative">
           <div className="flex w-full items-center justify-between">

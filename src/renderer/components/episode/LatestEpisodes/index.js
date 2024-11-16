@@ -103,7 +103,7 @@ const LatestEpisodes = React.memo(({ state, sectionTitle }) => {
               transform: { duration: 0.2, ease: 'easeOut' },
               opacity: { duration: 0.1 }
             }}
-            className="grid grid-cols-4 gap-6 w-full place-items-center"
+            className="grid grid-cols-4 gap-4 w-full place-items-center"
           >
             {isLoading || !displayEpisodes
               ? Array.from({ length: 8 }).map((_, i) => (
@@ -122,7 +122,7 @@ const LatestEpisodes = React.memo(({ state, sectionTitle }) => {
 
         {currentPage > 1 && (
           <button
-            className="absolute -left-16 top-1/2 transform -translate-y-1/2 transition-opacity duration-300 hover:opacity-100 opacity-50"
+            className="absolute -left-20 top-1/2 transform -translate-y-1/2 transition-opacity duration-300 hover:opacity-100 opacity-50 rounded-full bg-black/30 p-2"
             onClick={handlePrev}
             disabled={isLoading}
           >
@@ -135,7 +135,7 @@ const LatestEpisodes = React.memo(({ state, sectionTitle }) => {
 
         {(!isLoading && hasMore) && (
           <button
-            className="absolute -right-16 top-1/2 transform -translate-y-1/2 transition-opacity duration-300 hover:opacity-100 opacity-50"
+            className="absolute -right-20 top-1/2 transform -translate-y-1/2 transition-opacity duration-300 hover:opacity-100 opacity-50 rounded-full bg-black/30 p-2"
             onClick={handleNext}
             disabled={isLoading}
           >
