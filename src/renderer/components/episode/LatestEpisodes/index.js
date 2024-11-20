@@ -1,11 +1,10 @@
 const React = require('react');
-const { useState, useEffect, useCallback, useMemo } = React;
+const { useState, useEffect } = React;
 const { Icon } = require('@iconify/react');
-const { motion, AnimatePresence } = require('framer-motion');
 const useRSSData = require('../../../hooks/useRSSData');
 const useModernBackground = require('../../../hooks/useModernBackground');
-const usePagination = require('../../../hooks/usePagination');
 
+const eventBus = require('../../../lib/event-bus');
 const TorrentPlayer = require('../../../lib/torrent-player');
 const { sendNotification } = require('../../../lib/errors');
 
@@ -14,27 +13,13 @@ const EpisodeCardSkeleton = require('./skeleton');
 
 const LatestEpisodes = React.memo(({ state, sectionTitle }) => {
   const [loadingEpisodeId, setLoadingEpisodeId] = useState(null);
-  
+
   const { rssAnimes, isLoading, error } = useRSSData({
     state,
     page: 1,
-    perPage: 24,
+    perPage: 8,
     emptyState: false
   });
-
-  const {
-    currentPage,
-    direction,
-    hasMore,
-    handlePrev,
-    handleNext
-  } = usePagination(rssAnimes?.length || 0);
-
-  const displayEpisodes = useMemo(() => {
-    if (!rssAnimes) return null;
-    const startIndex = (currentPage - 1) * 8;
-    return rssAnimes.slice(startIndex, startIndex + 8);
-  }, [rssAnimes, currentPage]);
 
   const background = useModernBackground({
     primaryColor: '#63e8ff',
@@ -63,21 +48,6 @@ const LatestEpisodes = React.memo(({ state, sectionTitle }) => {
     TorrentPlayer.playTorrent(anime, state, setLoadingEpisodeId);
   };
 
-  const slideVariants = {
-    enter: (direction) => ({
-      transform: `translateX(${direction > 0 ? 100 : -100}%)`,
-      opacity: 0
-    }),
-    center: {
-      transform: 'translateX(0%)',
-      opacity: 1
-    },
-    exit: (direction) => ({
-      transform: `translateX(${direction < 0 ? 100 : -100}%)`,
-      opacity: 0
-    })
-  };
-
   return (
     <div className="relative flex flex-col py-6">
       <div
@@ -89,62 +59,35 @@ const LatestEpisodes = React.memo(({ state, sectionTitle }) => {
         }}
       />
       <h2 className="relative text-2xl font-bold mb-6 px-8 text-center">{sectionTitle}</h2>
-      
+
       <div className="relative mx-auto w-full max-w-[90%]">
-        <AnimatePresence mode="wait" initial={false} custom={direction}>
-          <motion.div
-            key={currentPage}
-            custom={direction}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              transform: { duration: 0.2, ease: 'easeOut' },
-              opacity: { duration: 0.1 }
-            }}
-            className="grid grid-cols-4 gap-4 w-full place-items-center"
-          >
-            {isLoading || !displayEpisodes
-              ? Array.from({ length: 8 }).map((_, i) => (
-                <EpisodeCardSkeleton key={i} />
-              ))
-              : displayEpisodes.map((anime, i) => (
-                <EpisodeCard
-                  key={i}
-                  anime={anime}
-                  isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
-                  onPlay={() => handlePlay(anime)}
-                />
-              ))}
-          </motion.div>
-        </AnimatePresence>
+        <div className="grid grid-cols-4 gap-8 w-full place-items-center">
+          {isLoading || !rssAnimes
+            ? Array.from({ length: 8 }).map((_, i) => (
+              <EpisodeCardSkeleton key={i} />
+            ))
+            : rssAnimes.map((anime, i) => (
+              <EpisodeCard
+                key={i}
+                anime={anime}
+                isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
+                onPlay={() => handlePlay(anime)}
+              />
+            ))}
+        </div>
 
-        {currentPage > 1 && (
+        <div className="flex justify-center w-full">
           <button
-            className="absolute -left-20 top-1/2 transform -translate-y-1/2 transition-opacity duration-300 hover:opacity-100 opacity-50 rounded-full bg-black/30 p-2"
-            onClick={handlePrev}
-            disabled={isLoading}
+            onClick={() => eventBus.emit('navigate', { path: '/latest-episodes' })}
+            className="flex flex-col items-center mt-8 transition-opacity duration-300 hover:opacity-70 group"
           >
+            {/* <span className="text-lg font-medium mb-2">Ver más</span> */}
             <Icon
-              icon="gravity-ui:chevron-left"
-              className="w-16 h-16 pointer-events-none"
+              icon="gravity-ui:chevron-down"
+              className="w-24 h-24 pointer-events-none transition-transform duration-300 group-hover:translate-y-1"
             />
           </button>
-        )}
-
-        {(!isLoading && hasMore) && (
-          <button
-            className="absolute -right-20 top-1/2 transform -translate-y-1/2 transition-opacity duration-300 hover:opacity-100 opacity-50 rounded-full bg-black/30 p-2"
-            onClick={handleNext}
-            disabled={isLoading}
-          >
-            <Icon
-              icon="gravity-ui:chevron-right"
-              className="w-16 h-16 pointer-events-none"
-            />
-          </button>
-        )}
+        </div>
       </div>
     </div>
   );

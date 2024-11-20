@@ -87,7 +87,7 @@
     "cross-zip": "4.0.0",
     "depcheck": "1.4.7",
     "dotenv": "^16.4.5",
-    "electron": "^33.0.2",
+    "electron": "^29.1.4",
     "electron-builder": "^24.13.3",
     "gh-release": "7.0.2",
     "minimist": "1.2.8",
