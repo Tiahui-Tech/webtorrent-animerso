@@ -81,7 +81,7 @@ function AppContent({ initialState, onUpdate }) {
     eventBus.on('stateUpdate', stateUpdateHandler);
 
     const navigationHandler = ({ path, state }) => {
-      navigate(path, { state });
+      navigate(path, { state, replace: true });
     };
     eventBus.on('navigate', navigationHandler);
 
