@@ -3459,9 +3459,17 @@ video {
   background-color: rgb(39 39 42 / var(--tw-bg-opacity));
 }
 
+.bg-zinc-800\/80 {
+  background-color: rgb(39 39 42 / 0.8);
+}
+
 .bg-zinc-900 {
   --tw-bg-opacity: 1;
   background-color: rgb(24 24 27 / var(--tw-bg-opacity));
+}
+
+.bg-zinc-900\/50 {
+  background-color: rgb(24 24 27 / 0.5);
 }
 
 .bg-zinc-950 {
@@ -3768,10 +3776,6 @@ video {
 
 .pr-2 {
   padding-right: 0.5rem;
-}
-
-.pr-3 {
-  padding-right: 0.75rem;
 }
 
 .pr-4 {

@@ -92,7 +92,7 @@ const SearchInput = ({ searchTerm, setSearchTerm }) => {
                     icon="gravity-ui:magnifier"
                     width="28"
                     height="28"
-                    className="text-white/70 hover:text-white pointer-events-none"
+                    className="text-white pointer-events-none"
                 />
             </button>
         </div>

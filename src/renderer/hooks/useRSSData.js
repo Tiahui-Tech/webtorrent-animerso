@@ -32,7 +32,7 @@ const useRSSData = ({ page, perPage, emptyState }) => {
 
     try {
       // Fetch new data from the API
-      const response = await fetch(`${API_BASE_URL}/anime/rss?page=${page}&perPage=${perPage}&withHevc=true`);
+      const response = await fetch(`${API_BASE_URL}/anime/rss?page=${page}&perPage=${perPage}&withHevc=false`);
       if (!response.ok) throw new Error(ERROR_MESSAGE);
       const rssAnimesData = await response.json();
 

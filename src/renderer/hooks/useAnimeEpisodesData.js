@@ -11,7 +11,7 @@ const useAnimeEpisodesData = (idAnilist, withTorrents = false) => {
     setIsLoading(true);
     setEpisodes(defaultEpisodes); // Restart episodes array
     try {
-      const response = await fetch(`${API_BASE_URL}/anime/episodes/${idAnilist}?torrents=${withTorrents}&withHevc=true`);
+      const response = await fetch(`${API_BASE_URL}/anime/episodes/${idAnilist}?torrents=${withTorrents}&withHevc=false`);
       const data = await response.json();
       setEpisodes(data.episodes);
     } catch (error) {

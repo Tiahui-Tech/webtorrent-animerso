@@ -190,8 +190,21 @@ const Header = ({ state }) => {
             )}
           </div>
 
-          {/* Animeton Logo */}
-          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          {/* Center Content: Navigation Links + Logo */}
+          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-8">
+            {/* Left Link */}
+            <button 
+              className="text-white focus:outline-none p-1 hover:bg-zinc-800 rounded text-sm font-semibold flex items-center gap-2"
+              style={{ WebkitAppRegion: 'no-drag' }}
+              onClick={() => eventBus.emit('navigate', { path: '/popular-anime' })}
+            >
+              Animes Populares
+              <Icon icon="gravity-ui:bookmark" width="20" height="20" className="pointer-events-none text-zinc-500" />
+            </button>
+
+            <Divider orientation="vertical" className="bg-zinc-800 h-6 mr-1" />
+
+            {/* Animeton Logo */}
             <div className="flex flex-col items-center" style={{ WebkitAppRegion: 'no-drag', zIndex: 9999 }}>
               <p onClick={handleHome} className="text-white font-bold text-2xl leading-none" style={{ cursor: canGoHome ? 'pointer' : 'default' }}>Animeton</p>
               <div className="flex items-center gap-1">
@@ -205,6 +218,18 @@ const Header = ({ state }) => {
                 <span onClick={isPlayerRoute(currentPath) ? handleHome : handleClosedBeta} className="text-zinc-500 text-xs mt-1 cursor-pointer">v{appVersion}</span>
               </div>
             </div>
+
+            <Divider orientation="vertical" className="bg-zinc-800 h-6 mr-1" />
+
+            {/* Right Link */}
+            <button 
+              className="text-white focus:outline-none p-1 hover:bg-zinc-800 rounded text-sm font-semibold flex items-center gap-2"
+              style={{ WebkitAppRegion: 'no-drag' }}
+              onClick={() => eventBus.emit('navigate', { path: '/latest-episodes' })}
+            >
+              <Icon icon="gravity-ui:calendar" width="20" height="20" className="pointer-events-none text-zinc-500" />
+              Episodios Recientes
+            </button>
           </div>
 
           {/* Window Controls and Discord User */}
@@ -212,41 +237,32 @@ const Header = ({ state }) => {
 
             {/* Discord User */}
             {(appIsActivated && appUserDiscordId && !appIsBlocked) && (
-              <div className="flex flex-row items-center gap-2 bg-zinc-900 rounded-full pl-1 pr-3 py-1" style={{
-                zIndex: 9999, pointerEvents: 'auto', WebkitAppRegion: 'no-drag'
-              }}>
-                {isLoadingUserData ? (
-                  <>
-                    <Skeleton className="rounded-full" style={{ backgroundColor: '#ffffff30' }}>
-                      <div className="w-8 h-8 rounded-full bg-default-200"></div>
-                    </Skeleton>
-                    <Skeleton className="w-24 rounded-lg" style={{ backgroundColor: '#ffffff30' }}>
-                      <div className="h-4 rounded-lg bg-default-200"></div>
-                    </Skeleton>
-                  </>
-                ) : (
-                  <>
-                    <Tooltip content="¡Consigue mas interactuando en discord!" className='bg-zinc-900 text-white' placement='bottom'>
-                      <div className="flex flex-row items-center gap-1">
-                        <img src={'assets/icons/coin.png'} alt="coin" className="w-4 h-4 ml-2" />
-                        <span className="text-white font-medium text-sm">
-                          {userData?.user?.coins || 0}
-                        </span>
-                      </div>
-                    </Tooltip>
-                    <Divider orientation="vertical" className="h-8" />
+            <div className="flex items-center gap-3 bg-zinc-900/50 rounded-full px-3 py-1.5" 
+              style={{ WebkitAppRegion: 'no-drag' }}>
+              {isLoadingUserData ? (
+                <Skeleton className="w-24" />
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
                     <img
                       src={userData?.discord?.avatarURL}
                       alt={userData?.discord?.username}
-                      className="w-8 h-8 rounded-full"
+                      className="w-6 h-6 rounded-full"
                     />
-                    <span className="text-white font-medium text-sm">
-                      {userData?.discord?.username || '???'}
+                    <span className="text-white text-sm font-medium">
+                      {userData?.discord?.username}
                     </span>
-                  </>
-                )}
-              </div>
-            )}
+                  </div>
+                  <Tooltip content="¡Consigue mas interactuando en discord!">
+                    <div className="flex items-center gap-1 bg-zinc-800/80 rounded-full px-2 py-0.5">
+                      <img src={'assets/icons/coin.png'} alt="coin" className="w-3.5 h-3.5" />
+                      <span className="text-white text-xs font-medium">{userData?.user?.coins || 0}</span>
+                    </div>
+                  </Tooltip>
+                </>
+              )}
+            </div>
+          )}
 
             {updateDownloaded && (
               <>
