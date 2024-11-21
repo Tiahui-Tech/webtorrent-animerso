@@ -13,12 +13,13 @@ const Episode = memo(({ anime, isLoading, onPlay }) => {
 
   const episodeDuration = anime?.duration || anime?.episode?.runtime || anime?.episode?.length
   const episodeTorrentLink = anime?.torrent?.link.toLowerCase();
+  const hevcTorrent = anime?.torrentHevc
 
   const episode = anime?.episode;
 
   const handlePlay = (e) => {
     e.preventDefault();
-    onPlay(episode);
+    onPlay();
   }
 
   const handleAnimeClick = () => {
@@ -42,7 +43,7 @@ const Episode = memo(({ anime, isLoading, onPlay }) => {
           <div className="absolute inset-0 flex items-center justify-center opacity-0 transition duration-300 ease-in-out shadow-current hover:opacity-50 z-10">
             <Icon icon="gravity-ui:play-fill" className="pointer-events-none" width="64" height="64" style={{ color: '#000' }} />
           </div>
-          {episodeTorrentLink.includes('hevc') && <Tooltip content="Cargará hasta 3 veces más rápido por usar el códec HEVC" className="bg-zinc-900 text-white" >
+          {hevcTorrent && <Tooltip content="Cargará hasta 3 veces más rápido por usar el códec HEVC" className="bg-zinc-900 text-white" >
             <Icon
               icon="akar-icons:thunder"
               width="26"

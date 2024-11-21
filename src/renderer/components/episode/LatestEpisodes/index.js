@@ -17,6 +17,7 @@ const LatestEpisodes = React.memo(({
   sectionTitle,
   perPage = 8,
   showViewMore = true,
+  viewMoreText = false,
   cardAnimation = false
 }) => {
   const [loadingEpisodeId, setLoadingEpisodeId] = useState(null);
@@ -130,14 +131,17 @@ const LatestEpisodes = React.memo(({
         </div>
 
         {showViewMore && (
-          <div className="flex justify-center w-full">
+          <div className="flex flex-col items-center justify-center w-full">
             <button
               onClick={() => eventBus.emit('navigate', { path: '/latest-episodes' })}
-              className="flex flex-col items-center mt-8 transition-opacity duration-300 hover:opacity-70 group"
+              className="flex flex-col items-center mt-4 transition-opacity duration-300 opacity-70 hover:opacity-100 group"
             >
+              {viewMoreText && <span className="text-lg font-medium">Ver más</span>}
               <Icon
                 icon="gravity-ui:chevron-down"
-                className="w-24 h-24 pointer-events-none transition-transform duration-300 group-hover:translate-y-1"
+                width="100"
+                height="100"
+                className="pointer-events-none transition-transform duration-300 group-hover:translate-y-1"
               />
             </button>
           </div>

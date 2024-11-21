@@ -15,7 +15,6 @@ const {
   Tooltip
 } = require('@nextui-org/react');
 const { Icon } = require('@iconify/react');
-const { motion } = require('framer-motion');
 
 const useExtractColor = require('../../../hooks/useExtractColor');
 
@@ -35,7 +34,7 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }) => {
 
   const handlePlay = (e) => {
     e.preventDefault();
-    onPlay(episode);
+    onPlay();
   }
 
   const handleIconClick = (e) => {
