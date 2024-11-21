@@ -13,7 +13,6 @@ const Activation = require('../../components/common/activation');
 
 const Home = ({ state }) => {
   const animes = useAnimesData({ displayCount: 10 });
-  const [searchTerm, setSearchTerm] = useState('');
   const { isValid, isLoading, validateKey } = useValidateKey(state?.saved?.activation?.key);
   const needActivation = !state?.saved?.activation?.key || (state?.saved?.activation?.key && !isValid);
 
@@ -29,18 +28,6 @@ const Home = ({ state }) => {
     }
   }, [state?.saved?.activation?.key, validateKey]);
 
-  useEffect(() => {
-    const handleSearchTermChanged = (term) => {
-      setSearchTerm(term);
-    };
-
-    eventBus.on('searchTermChanged', handleSearchTermChanged);
-
-    return () => {
-      eventBus.off('searchTermChanged', handleSearchTermChanged);
-    };
-  }, []);
-
   if (isLoading) return <Spinner />;
 
   if (needActivation) {
@@ -51,17 +38,13 @@ const Home = ({ state }) => {
 
   return (
     <div>
-      {!searchTerm && (
-        <>
-          <AnimeCarousel animes={animes} />
-          <LatestEpisodes state={state} sectionTitle={'Ultimos Episodios'} />
-        </>
-      )}
+      <AnimeCarousel animes={animes} />
+      <LatestEpisodes state={state} sectionTitle={'Ultimos Episodios'} />
       <AnimeSection
         state={state}
-        sectionTitle={searchTerm ? '' : 'Animes Populares'}
-        searchTerm={searchTerm}
-        fullScreen={!!searchTerm}
+        sectionTitle={'Animes Populares'}
+        searchTerm={''}
+        fullScreen={false}
       />
     </div>
   );

@@ -21,6 +21,7 @@ const DiscordTicketModal = require('../components/common/modal/discord-ticket-mo
 const Home = require('./Home');
 const AnimeDetails = require('./AnimeDetails');
 const LatestEpisodes = require('./LatestEpisodes');
+const PopularAnime = require('./PopularAnime');
 
 const Player = require('./player-page');
 
@@ -167,6 +168,7 @@ function AppContent({ initialState, onUpdate }) {
               />
               <Route path="/player" element={<Player state={state} currentTorrent={currentTorrent} />} />
               <Route path="/latest-episodes" element={<LatestEpisodes state={state} />} />
+              <Route path="/popular-anime" element={<PopularAnime state={state} />} />
             </Routes>
           </React.Suspense>
         </div>

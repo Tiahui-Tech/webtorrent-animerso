@@ -5,8 +5,7 @@ const {
   useLocation,
 } = require('react-router-dom');
 
-const { ipcRenderer, shell } = require('electron');
-const remote = require('@electron/remote')
+const { ipcRenderer } = require('electron');
 const eventBus = require('../../lib/event-bus');
 const { debounce } = require('../../../modules/utils');
 const appVersion = require('../../../../package.json').version;
@@ -55,19 +54,51 @@ const Header = ({ state }) => {
   const { updateDownloaded, handleUpdateClick } = useUpdateDownload();
 
   const [opacity, setOpacity] = useState(1);
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
-  // Debounced setDebouncedSearchTerm
-  const debouncedSetSearchTerm = useCallback(
-    debounce(term => setDebouncedSearchTerm(term), 500),
-    []
+  // Efficient debounced search handler
+  const debouncedEmitSearch = useCallback(
+    debounce((term) => {
+      if (currentPath !== '/popular-anime') {
+        // Listen for navigation completion before emitting search
+        const handleRouteChange = (path) => {
+          if (path === '/popular-anime') {
+            eventBus.emit('searchTermChanged', term);
+            eventBus.off('routeChanged', handleRouteChange);
+          }
+        };
+        
+        eventBus.on('routeChanged', handleRouteChange);
+        eventBus.emit('navigate', { 
+          path: '/popular-anime',
+          state: { searchTerm: term }
+        });
+      } else {
+        // If already on popular-anime, emit search directly
+        eventBus.emit('searchTermChanged', term);
+      }
+    }, 500),
+    [currentPath]
   );
 
-  // Update searchTerm and trigger debounce
-  const handleSearchTermChange = (term) => {
+  const handleSearchChange = (term) => {
     setSearchTerm(term);
-    debouncedSetSearchTerm(term);
+    debouncedEmitSearch(term);
   };
+
+  useEffect(() => {
+    const currentPath = location.pathname;
+
+    const handleSearchTermChanged = (term) => {
+      if (term && currentPath !== '/popular-anime') {
+        eventBus.emit('navigate', {
+          path: '/popular-anime'
+        });
+      }
+      setSearchTerm(term);
+    };
+
+    eventBus.on('searchTermChanged', handleSearchTermChanged);
+  }, [location]);
 
   useEffect(() => {
     const appKey = state?.saved?.activation?.key;
@@ -102,13 +133,6 @@ const Header = ({ state }) => {
     }
   }, [location]);
 
-  useEffect(() => {
-    if (isHome) {
-      // Emit the search event when the debounced search term changes
-      eventBus.emit('searchTermChanged', debouncedSearchTerm);
-    }
-  }, [debouncedSearchTerm, isHome]);
-
   const handleClosedBeta = () => {
     eventBus.emit('modalOpen', 'closedBeta');
   }
@@ -140,15 +164,15 @@ const Header = ({ state }) => {
             <div className="flex flex-row items-center">
               <button
                 onClick={handleHome}
-                disabled={!canGoHome}
-                className={`focus:outline-none p-1 hover:bg-zinc-800 rounded ${canGoHome ? 'cursor-pointer' : 'cursor-default'}`}
+                disabled={isHome}
+                className={`focus:outline-none p-1 hover:bg-zinc-800 rounded ${!isHome ? 'cursor-pointer' : 'cursor-default'}`}
                 style={{ WebkitAppRegion: 'no-drag', zIndex: 9999 }}
               >
                 <Icon
                   icon="gravity-ui:house"
                   width="28"
                   height="28"
-                  className={`pointer-events-none ${canGoHome ? 'text-white' : 'text-gray-500'}`}
+                  className={`pointer-events-none ${!isHome ? 'text-white' : 'text-gray-500'}`}
                 />
               </button>
               <button
@@ -182,10 +206,10 @@ const Header = ({ state }) => {
             <Divider orientation="vertical" className="bg-zinc-800 h-6 mr-1" />
 
             {/* Search Input */}
-            {(isHome && appIsActivated && !appIsBlocked) && (
+            {(!isPlayerRoute(currentPath) && appIsActivated && !appIsBlocked) && (
               <SearchInput
                 searchTerm={searchTerm}
-                setSearchTerm={handleSearchTermChange}
+                setSearchTerm={handleSearchChange}
               />
             )}
           </div>
@@ -193,7 +217,7 @@ const Header = ({ state }) => {
           {/* Center Content: Navigation Links + Logo */}
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-8">
             {/* Left Link */}
-            <button 
+            <button
               className="text-white focus:outline-none p-1 hover:bg-zinc-800 rounded text-sm font-semibold flex items-center gap-2"
               style={{ WebkitAppRegion: 'no-drag' }}
               onClick={() => eventBus.emit('navigate', { path: '/popular-anime' })}
@@ -222,7 +246,7 @@ const Header = ({ state }) => {
             <Divider orientation="vertical" className="bg-zinc-800 h-6 mr-1" />
 
             {/* Right Link */}
-            <button 
+            <button
               className="text-white focus:outline-none p-1 hover:bg-zinc-800 rounded text-sm font-semibold flex items-center gap-2"
               style={{ WebkitAppRegion: 'no-drag' }}
               onClick={() => eventBus.emit('navigate', { path: '/latest-episodes' })}
@@ -237,32 +261,32 @@ const Header = ({ state }) => {
 
             {/* Discord User */}
             {(appIsActivated && appUserDiscordId && !appIsBlocked) && (
-            <div className="flex items-center gap-3 bg-zinc-900/50 rounded-full px-3 py-1.5" 
-              style={{ WebkitAppRegion: 'no-drag' }}>
-              {isLoadingUserData ? (
-                <Skeleton className="w-24" />
-              ) : (
-                <>
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={userData?.discord?.avatarURL}
-                      alt={userData?.discord?.username}
-                      className="w-6 h-6 rounded-full"
-                    />
-                    <span className="text-white text-sm font-medium">
-                      {userData?.discord?.username}
-                    </span>
-                  </div>
-                  <Tooltip content="¡Consigue mas interactuando en discord!">
-                    <div className="flex items-center gap-1 bg-zinc-800/80 rounded-full px-2 py-0.5">
-                      <img src={'assets/icons/coin.png'} alt="coin" className="w-3.5 h-3.5" />
-                      <span className="text-white text-xs font-medium">{userData?.user?.coins || 0}</span>
+              <div className="flex items-center gap-3 bg-zinc-900/50 rounded-full px-3 py-1.5"
+                style={{ WebkitAppRegion: 'no-drag' }}>
+                {isLoadingUserData ? (
+                  <Skeleton className="w-24" />
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={userData?.discord?.avatarURL}
+                        alt={userData?.discord?.username}
+                        className="w-6 h-6 rounded-full"
+                      />
+                      <span className="text-white text-sm font-medium">
+                        {userData?.discord?.username}
+                      </span>
                     </div>
-                  </Tooltip>
-                </>
-              )}
-            </div>
-          )}
+                    <Tooltip content="¡Consigue mas interactuando en discord!">
+                      <div className="flex items-center gap-1 bg-zinc-800/80 rounded-full px-2 py-0.5">
+                        <img src={'assets/icons/coin.png'} alt="coin" className="w-3.5 h-3.5" />
+                        <span className="text-white text-xs font-medium">{userData?.user?.coins || 0}</span>
+                      </div>
+                    </Tooltip>
+                  </>
+                )}
+              </div>
+            )}
 
             {updateDownloaded && (
               <>

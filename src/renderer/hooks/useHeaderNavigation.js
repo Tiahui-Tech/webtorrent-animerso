@@ -76,11 +76,11 @@ const useHeaderNavigation = () => {
         });
     }, [location]);
 
-    // Update canGoHome based on both path and search
+    // Update canGoHome based on path only
     useEffect(() => {
         const currentPath = location.pathname;
-        setCanGoHome(currentPath !== '/' || searchTerm);
-    }, [location.pathname, searchTerm]);
+        setCanGoHome(currentPath !== HOME_PATH);
+    }, [location.pathname]);
 
     useEffect(() => {
         const updateNavigationState = () => {
@@ -149,14 +149,10 @@ const useHeaderNavigation = () => {
         e?.preventDefault();
         if (!canGoHome) return;
 
-        if (!isHome) {
-            navigate(HOME_PATH);
-        }
-
-        // Reset search state
+        navigate(HOME_PATH);
         setSearchTerm('');
         eventBus.emit('searchTermChanged', '');
-    }, [navigate, canGoHome, isHome, location.pathname]);
+    }, [navigate, canGoHome]);
 
     return {
         canGoBack,
