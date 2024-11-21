@@ -7,6 +7,8 @@ const useAnimesData = require('../../../hooks/useAnimesData');
 const useSearchAnimes = require('../../../hooks/useSearchAnimes');
 const useModernBackground = require('../../../hooks/useModernBackground');
 
+const eventBus = require('../../../lib/event-bus');
+
 const AnimeCard = require('./anime');
 const AnimeCardSkeleton = require('./skeleton');
 
@@ -18,7 +20,9 @@ const AnimeSection = React.memo(({
   perPage = 28,
   showBackground = false,
   cardAnimation = false,
-  gridClassName = "grid-cols-auto-fit"
+  gridClassName = "grid-cols-auto-fit",
+  showViewMore = false,
+  viewMoreText = false
 }) => {
   const [filteredAnimes, setFilteredAnimes] = useState([]);
   const animes = useAnimesData({ perPage });
@@ -134,6 +138,23 @@ const AnimeSection = React.memo(({
       ) : (
         <div className={`grid ${gridClassName} gap-8 justify-center items-start min-h-[400px] w-full`}>
           {displayAnimes.map((anime, i) => renderAnimeCard(anime, i))}
+        </div>
+      )}
+
+      {!isEmpty && showViewMore && (
+        <div className="flex flex-col items-center justify-center w-full">
+          <button
+            onClick={() => eventBus.emit('navigate', { path: '/popular-anime' })}
+            className="flex flex-col items-center mt-4 transition-opacity duration-300 opacity-70 hover:opacity-100 group"
+          >
+            {viewMoreText && <span className="text-lg font-medium">Ver más</span>}
+            <Icon
+              icon="gravity-ui:chevron-down"
+              width="100"
+              height="100"
+              className="pointer-events-none transition-transform duration-300 group-hover:translate-y-1"
+            />
+          </button>
         </div>
       )}
     </div>

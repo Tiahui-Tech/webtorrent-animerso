@@ -45,6 +45,7 @@ const Home = ({ state }) => {
         sectionTitle={'Animes Populares'}
         searchTerm={''}
         fullScreen={false}
+        showViewMore={true}
       />
     </div>
   );

@@ -31,7 +31,7 @@ const PopularAnimePage = ({ state }) => {
       <AnimeSection
         state={state}
         fullScreen={true}
-        perPage={48}
+        perPage={70}
         showBackground={true}
         cardAnimation={true}
         searchTerm={searchTerm}
