@@ -29,6 +29,7 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }) => {
 
   const episodeDuration = anime?.duration || anime?.episode?.runtime || anime?.episode?.length
   const episodeTorrentLink = anime?.torrent?.link.toLowerCase();
+  const hevcTorrent = anime?.torrentHevc
 
   const episode = anime?.episode;
 
@@ -54,10 +55,9 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }) => {
 
   const cardColor = getNeonColor(animeColors[0]);
 
-
   return (
     <div className="max-w-[400px] px-2">
-      <Card className="flex flex-col relative overflow-visible rounded-md border border-zinc-800">
+      <Card className="flex flex-col relative overflow-visible rounded-md border border-zinc-900 bg-zinc-950">
         <CardHeader className="flex flex-col truncate items-start justify-start relative">
           <div className="flex w-full items-center justify-between">
             <div className="flex flex-col flex-1 min-w-0">
@@ -68,7 +68,7 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }) => {
                 {`Episodio ${anime?.torrent?.episode || anime?.episode?.episodeNumber || anime?.episode?.episode || '??'}`}
               </span>
             </div>
-            {episodeTorrentLink.includes('hevc') && <Tooltip content="Cargará hasta 3 veces más rápido por usar el códec HEVC" className="bg-zinc-900 text-white" >
+            {hevcTorrent && <Tooltip content="Cargará hasta 3 veces más rápido por usar el códec HEVC" className="bg-zinc-900 text-white" >
               <Icon
                 icon="akar-icons:thunder"
                 width="26"
@@ -91,7 +91,7 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }) => {
 
           </div>
         </CardHeader>
-        <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}>
+        <div className="transition-transform duration-300 hover:scale-105">
           <CardBody
             className="w-full h-full p-0 relative cursor-pointer rounded-sm"
             onClick={handlePlay}
@@ -130,13 +130,13 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }) => {
               </div>
             )}
           </CardBody>
-        </motion.div>
+        </div>
         <CardFooter>
           <div className="flex justify-between items-center w-full">
             <div className="flex items-center">
               <Icon icon="gravity-ui:calendar" />
               <span className="text-sm text-gray-400 ml-1">
-                {timeAgo(anime?.torrent?.pubDate)}
+                {timeAgo(anime?.torrentHevc?.pubDate || anime?.torrent?.pubDate)}
               </span>
             </div>
             {episodeDuration && (
