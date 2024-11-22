@@ -30,6 +30,19 @@ app.setAppUserModelId(config.APP_ID)
 // allow electron/chromium to play startup sounds (without user interaction)
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
 
+// Enable media codecs and hardware acceleration
+app.commandLine.appendSwitch('enable-features', 'PlatformHEVCDecoderSupport,PlatformEncryptedHevcDecoderSupport')
+
+// Register platform-specific media codecs
+app.commandLine.appendSwitch('enable-media-codec', true)
+app.commandLine.appendSwitch('enable-features', 'WindowsMediaFoundation')
+
+// Enable hardware acceleration and high performance video processing
+app.commandLine.appendSwitch('enable-accelerated-mjpeg-decode')
+app.commandLine.appendSwitch('enable-accelerated-video')
+app.commandLine.appendSwitch('ignore-gpu-blacklist')
+app.commandLine.appendSwitch('enable-native-gpu-memory-buffers')
+
 // Start the app without showing the main window when auto launching on login
 // (On Windows and Linux, we get a flag. On MacOS, we get special API.)
 const hidden = argv.includes('--hidden') ||

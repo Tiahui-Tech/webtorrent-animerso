@@ -120,6 +120,9 @@ module.exports = class TorrentListController {
   // TODO: use torrentKey, not infoHash
   toggleTorrent (infoHash) {
     const torrentSummary = TorrentSummary.getByKey(this.state, infoHash)
+    
+    if (!torrentSummary) return;
+
     if (torrentSummary?.status === 'paused') {
       torrentSummary.status = 'new'
       this.startTorrentingSummary(torrentSummary?.torrentKey)
@@ -152,6 +155,8 @@ module.exports = class TorrentListController {
   }
 
   pauseTorrent (torrentSummary, playSound) {
+    if (!torrentSummary) return;
+
     torrentSummary.status = 'paused'
     ipcRenderer.send('wt-stop-torrenting', torrentSummary?.infoHash)
 

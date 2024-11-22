@@ -55,7 +55,7 @@ function isPlayableTorrentSummary(torrentSummary) {
 }
 
 function playTorrent(anime, state, setIsLoading) {
-  const torrentData = anime?.torrent;
+  const torrentData = anime?.torrentHevc || anime?.torrent;
 
   try {
     const hash = torrentData?.infoHash || torrentData?.infohash || torrentData?.hash;

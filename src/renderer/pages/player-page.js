@@ -2,7 +2,7 @@
 
 const React = require('react');
 const { useEffect, useState, useRef, useCallback } = React;
-const { useLocation, useNavigate } = require('react-router-dom');
+const { useLocation } = require('react-router-dom');
 const { AnimatePresence, motion } = require('framer-motion');
 
 const remote = require('@electron/remote')
@@ -23,12 +23,11 @@ const { sendNotification } = require('../lib/errors');
 const Spinner = require('../components/common/spinner');
 const VideoSpinner = require('../components/common/video-spinner');
 
-const { anitomyscript } = require('../../modules/anime');
+const anitomyscript = require('anitomyscript');
 
 // Shows a streaming video player. Standard features + Chromecast + Airplay
 function Player({ state, currentTorrent }) {
   const location = useLocation();
-  const navigate = useNavigate();
   const { fetchSubtitles, subtitles: apiSubtitles, isLoading: isFetchingSubtitles } = useApiSubtitles(currentTorrent?.infoHash);
   const [isMouseMoving, setIsMouseMoving] = useState(true);
   const [localSubtitles, setLocalSubtitles] = useState({ infoHash: null, tracks: [] });
@@ -101,8 +100,8 @@ function Player({ state, currentTorrent }) {
     const getAnimeInfo = async () => {
       const anitomyData = await anitomyscript(currentTorrent.name);
       return {
-        animeName: anitomyData[0].anime_title,
-        episodeNumber: Number(anitomyData[0].episode_number) || null
+        animeName: anitomyData.anime_title,
+        episodeNumber: Number(anitomyData.episode_number) || null
       };
     };
 
@@ -129,7 +128,6 @@ function Player({ state, currentTorrent }) {
         title = `${title} - E${episodeNumber}`;
       }
 
-      console.log('headerTitle emit', title);
       eventBus.emit('headerTitle', title);
     };
 
@@ -138,13 +136,19 @@ function Player({ state, currentTorrent }) {
       updateHeaderTitle(animeInfo);
 
       if (currentTorrent && isTorrentReady && rpcFrame) {
-        console.log('updateDiscordRPC', { 
+        console.log('rpcAndTitle: Updating Discord RPC with state:', { 
           currentTorrent, 
           isPaused: state.playing.isPaused, 
           isTorrentReady, 
           rpcFrame 
         });
         updateDiscordRPC(animeInfo);
+      } else {
+        console.log('rpcAndTitle: Skipping Discord RPC update, missing requirements:', {
+          hasTorrent: !!currentTorrent,
+          isTorrentReady,
+          hasRpcFrame: !!rpcFrame
+        });
       }
     };
 
@@ -241,12 +245,7 @@ function Player({ state, currentTorrent }) {
 
     // Subscribe to subtitle update event
     eventBus.on('subtitlesUpdate', handleSubtitlesUpdate);
-
-    // Cleanup: unsubscribe from event
-    return () => eventBus.off('subtitlesUpdate', handleSubtitlesUpdate);
   }, [
-    location,
-    navigate,
     subtitlesExist,
     maxSubLength,
     tracksAreFromActualTorrent,
@@ -276,7 +275,7 @@ function Player({ state, currentTorrent }) {
       };
     }
 
-    const MAX_ATTEMPTS = 16;
+    const MAX_ATTEMPTS = 30;
     if (attempts < MAX_ATTEMPTS) {
       console.log(`Checking subtitles (attempt ${attempts + 1} of ${MAX_ATTEMPTS})`);
 
@@ -287,15 +286,13 @@ function Player({ state, currentTorrent }) {
       if (maxLength > 0) {
         lastThreeLengths.push(maxLength);
         if (lastThreeLengths.length > 3) {
-          lastThreeLengths.shift(); // Keep only the last 3
+          lastThreeLengths.shift();
         }
       }
 
-      // Check if the last 3 lengths are equal
       const hasThreeEqualLengths = lastThreeLengths.length === 3 &&
         lastThreeLengths.every(length => length === lastThreeLengths[0]);
 
-      // Check if more subtitle checks are needed
       const needsMoreChecks = attempts >= 8
         ? (!exist || maxLength < 300 || !matchCurrentTorrent || !hasThreeEqualLengths)
         : true;
@@ -303,7 +300,12 @@ function Player({ state, currentTorrent }) {
       sendNotification(state, { title: `Subtítulos`, message: `Buscando... Intento: ${attempts + 1}/${MAX_ATTEMPTS}`, type: 'debug' })
 
       if (needsMoreChecks) {
-        const timeoutId = setTimeout(checkForSubtitles, 10000);
+        // Dynamic timeout based on attempt number
+        const timeout = attempts <= 5 ? 10000 : // First 5 attempts: 10 seconds
+                       attempts <= 10 ? 30000 : // Attempts 6-10: 30 seconds 
+                       60000; // Attempts 11-16: 60 seconds
+
+        const timeoutId = setTimeout(checkForSubtitles, timeout);
         subtitleCheckRef.current.timeoutId = timeoutId;
       } else {
         setAllSubtitlesFound(true);

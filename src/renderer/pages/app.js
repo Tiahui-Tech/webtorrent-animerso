@@ -20,6 +20,8 @@ const DiscordTicketModal = require('../components/common/modal/discord-ticket-mo
 // Perf optimization: Needed immediately, so do not lazy load it
 const Home = require('./Home');
 const AnimeDetails = require('./AnimeDetails');
+const LatestEpisodes = require('./LatestEpisodes');
+const PopularAnime = require('./PopularAnime');
 
 const Player = require('./player-page');
 
@@ -50,7 +52,7 @@ function AppContent({ initialState, onUpdate }) {
   const location = useLocation();
   const navigate = useNavigate();
   const posthog = usePostHog();
-  
+
   const stateRef = useRef(state);
   stateRef.current = state;
 
@@ -63,23 +65,6 @@ function AppContent({ initialState, onUpdate }) {
       });
     }
   }, []);
-
-  // Garbage collector and memory cleanup
-  useEffect(() => {
-    const cleanup = () => {
-      if (global.gc) global.gc();
-      
-      if (window.performance && window.performance.memory) {
-        window.performance.memory.usedJSHeapSize = 0;
-      }
-    };
-
-    cleanup();
-    
-    return () => {
-      cleanup();
-    };
-  }, [location.pathname]);
 
   // Page views and event listeners
   useEffect(() => {
@@ -97,7 +82,8 @@ function AppContent({ initialState, onUpdate }) {
     eventBus.on('stateUpdate', stateUpdateHandler);
 
     const navigationHandler = ({ path, state }) => {
-      navigate(path, { state });
+      navigate(path, { state, replace: true });
+      window.scrollTo(0, 0);
     };
     eventBus.on('navigate', navigationHandler);
 
@@ -112,11 +98,6 @@ function AppContent({ initialState, onUpdate }) {
     };
     eventBus.on('torrentUpdate', torrentUpdateHandler);
 
-    eventBus.on('updateDownloaded', () => {
-      setUpdateDownloadedModalOpen(true);
-      posthog?.capture('update_downloaded');
-    });
-
     eventBus.on('modalOpen', (modalId) => {
       switch (modalId) {
         case 'closedBeta':
@@ -124,6 +105,9 @@ function AppContent({ initialState, onUpdate }) {
           break;
         case 'discordTicket':
           setDiscordTicketModalOpen(true);
+          break;
+        case 'updateDownloaded':
+          setUpdateDownloadedModalOpen(true);
           break;
       }
     });
@@ -184,6 +168,8 @@ function AppContent({ initialState, onUpdate }) {
                 element={<AnimeDetails state={state} />}
               />
               <Route path="/player" element={<Player state={state} currentTorrent={currentTorrent} />} />
+              <Route path="/latest-episodes" element={<LatestEpisodes state={state} />} />
+              <Route path="/popular-anime" element={<PopularAnime state={state} />} />
             </Routes>
           </React.Suspense>
         </div>

@@ -7,7 +7,7 @@ const useAnimesData = ({ page = 1, perPage = 28, displayCount } = {}) => {
   useEffect(() => {
     const fetchAnimes = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/anime/list`);
+        const response = await fetch(`${API_BASE_URL}/anime/list?quantity=${perPage}`);
         const data = await response.json();
 
         if (!data) {
