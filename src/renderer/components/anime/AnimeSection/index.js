@@ -148,19 +148,19 @@ const AnimeSection = React.memo(({
 
       {!isEmpty && showViewMore && (
         <div className="flex flex-col items-center justify-center w-full">
-          <button
-            onClick={() => eventBus.emit('navigate', { path: '/popular-anime' })}
-            className="flex flex-col items-center mt-4 transition-opacity duration-300 opacity-70 hover:opacity-100 group"
-          >
-            {viewMoreText && <span className="text-lg font-medium">Ver más</span>}
-            <Icon
-              icon="gravity-ui:chevron-down"
-              width="100"
-              height="100"
-              className="pointer-events-none transition-transform duration-300 group-hover:translate-y-1"
-            />
-          </button>
-        </div>
+            <button
+              onClick={() => eventBus.emit('navigate', { path: '/popular-anime' })}
+              className="group flex items-center gap-2 mt-6 px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 transition-all duration-300"
+            >
+              <span className="text-xl font-semibold">Ver más</span>
+              <Icon
+                icon="gravity-ui:chevron-right"
+                width="26"
+                height="26"
+                className="pointer-events-none transition-transform duration-300 group-hover:translate-x-1"
+              />
+            </button>
+          </div>
       )}
     </div>
   );

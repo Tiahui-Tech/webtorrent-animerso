@@ -140,14 +140,14 @@ const LatestEpisodes = React.memo(({
           <div className="flex flex-col items-center justify-center w-full">
             <button
               onClick={() => eventBus.emit('navigate', { path: '/latest-episodes' })}
-              className="flex flex-col items-center mt-4 transition-opacity duration-300 opacity-70 hover:opacity-100 group"
+              className="group flex items-center gap-2 mt-6 px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 transition-all duration-300"
             >
-              {viewMoreText && <span className="text-lg font-medium">Ver más</span>}
+              <span className="text-xl font-semibold">Ver más</span>
               <Icon
-                icon="gravity-ui:chevron-down"
-                width="100"
-                height="100"
-                className="pointer-events-none transition-transform duration-300 group-hover:translate-y-1"
+                icon="gravity-ui:chevron-right"
+                width="26"
+                height="26"
+                className="pointer-events-none transition-transform duration-300 group-hover:translate-x-1"
               />
             </button>
           </div>
