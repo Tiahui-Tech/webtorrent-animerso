@@ -39,7 +39,7 @@ const Home = ({ state }) => {
   return (
     <div>
       <AnimeCarousel animes={animes} />
-      <LatestEpisodes state={state} sectionTitle={'Ultimos Episodios'} />
+      <LatestEpisodes state={state} sectionTitle={'Últimos Episodios'} />
       <AnimeSection
         state={state}
         sectionTitle={'Animes Populares'}

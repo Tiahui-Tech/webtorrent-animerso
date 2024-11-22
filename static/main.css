@@ -1430,6 +1430,14 @@ video {
   right: 0px;
 }
 
+.-right-3 {
+  right: -0.75rem;
+}
+
+.-top-2\.5 {
+  top: -0.625rem;
+}
+
 .bottom-0 {
   bottom: 0px;
 }
@@ -3867,6 +3875,10 @@ video {
   font-size: 0.6rem;
 }
 
+.text-\[9px\] {
+  font-size: 9px;
+}
+
 .text-base {
   font-size: 1rem;
   line-height: 1.5rem;
@@ -3953,6 +3965,11 @@ video {
 .text-\[\#17c964\] {
   --tw-text-opacity: 1;
   color: rgb(23 201 100 / var(--tw-text-opacity));
+}
+
+.text-\[\#ff5680\] {
+  --tw-text-opacity: 1;
+  color: rgb(255 86 128 / var(--tw-text-opacity));
 }
 
 .text-background {
@@ -6009,6 +6026,11 @@ video {
 
 .hover\:-translate-x-0:hover {
   --tw-translate-x: -0px;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+.hover\:-translate-y-1:hover {
+  --tw-translate-y: -0.25rem;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 

@@ -86,7 +86,7 @@ const SearchInput = ({ searchTerm, setSearchTerm }) => {
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
                 className={`focus:outline-none p-1 hover:bg-zinc-800 rounded 
-                           transition-colors ${isExpanded ? 'ml-2' : ''}`}
+                               transition-colors ${isExpanded ? 'ml-2' : ''}`}
             >
                 <Icon
                     icon="gravity-ui:magnifier"

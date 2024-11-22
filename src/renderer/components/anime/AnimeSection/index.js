@@ -117,11 +117,16 @@ const AnimeSection = React.memo(({
           }}
         />
       )}
-      
+
       {sectionTitle && (
-        <h2 className="relative text-2xl font-bold mb-6 text-center z-10">
-          {sectionTitle}
-        </h2>
+        <button
+          onClick={() => eventBus.emit('navigate', { path: '/popular-anime' })}
+          className="flex flex-row items-center gap-2 mb-6 transition-transform duration-300 hover:-translate-y-1">
+          <Icon icon="gravity-ui:star" width="28" height="28" className="pointer-events-none text-zinc-500" />
+          <h2 className="relative text-2xl font-bold text-center z-10">
+            {sectionTitle}
+          </h2>
+        </button>
       )}
 
       {isLoading ? (

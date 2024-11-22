@@ -13,6 +13,7 @@ const appVersion = require('../../../../package.json').version;
 const useDiscordUser = require('../../hooks/useDiscordUser');
 
 const SearchInput = require('./search-input');
+const NewBadge = require('./new-badge');
 const { Icon } = require('@iconify/react');
 const { Skeleton, Divider, Tooltip } = require('@nextui-org/react');
 
@@ -66,9 +67,9 @@ const Header = ({ state }) => {
             eventBus.off('routeChanged', handleRouteChange);
           }
         };
-        
+
         eventBus.on('routeChanged', handleRouteChange);
-        eventBus.emit('navigate', { 
+        eventBus.emit('navigate', {
           path: '/popular-anime',
           state: { searchTerm: term }
         });
@@ -217,14 +218,17 @@ const Header = ({ state }) => {
           {/* Center Content: Navigation Links + Logo */}
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-8">
             {/* Left Link */}
-            <button
-              className="text-white focus:outline-none p-1 hover:bg-zinc-800 rounded text-sm font-semibold flex items-center gap-2"
-              style={{ WebkitAppRegion: 'no-drag' }}
-              onClick={() => eventBus.emit('navigate', { path: '/popular-anime' })}
-            >
-              Animes Populares
-              <Icon icon="gravity-ui:bookmark" width="20" height="20" className="pointer-events-none text-zinc-500" />
-            </button>
+
+            <NewBadge>
+              <button
+                className="text-white focus:outline-none p-1 hover:bg-zinc-800 rounded text-sm font-semibold flex items-center gap-2"
+                style={{ WebkitAppRegion: 'no-drag' }}
+                onClick={() => eventBus.emit('navigate', { path: '/popular-anime' })}
+              >
+                <Icon icon="gravity-ui:star" width="20" height="20" className="pointer-events-none text-zinc-500" />
+                Animes Populares
+              </button>
+            </NewBadge>
 
             <Divider orientation="vertical" className="bg-zinc-800 h-6 mr-1" />
 
@@ -239,21 +243,24 @@ const Header = ({ state }) => {
                 >
                   {headerTitle}
                 </span>
-                <span onClick={isPlayerRoute(currentPath) ? handleHome : handleClosedBeta} className="text-zinc-500 text-xs mt-1 cursor-pointer">v{appVersion}</span>
+                <span className="text-zinc-500 text-xs mt-1 cursor-pointer">{' - '}</span>
+                <span onClick={isPlayerRoute(currentPath) ? handleHome : handleClosedBeta} className="text-zinc-400 text-xs mt-1 cursor-pointer">v{appVersion}</span>
               </div>
             </div>
 
             <Divider orientation="vertical" className="bg-zinc-800 h-6 mr-1" />
 
             {/* Right Link */}
-            <button
-              className="text-white focus:outline-none p-1 hover:bg-zinc-800 rounded text-sm font-semibold flex items-center gap-2"
-              style={{ WebkitAppRegion: 'no-drag' }}
-              onClick={() => eventBus.emit('navigate', { path: '/latest-episodes' })}
-            >
-              <Icon icon="gravity-ui:calendar" width="20" height="20" className="pointer-events-none text-zinc-500" />
-              Episodios Recientes
-            </button>
+            <NewBadge>
+              <button
+                className="text-white focus:outline-none p-1 hover:bg-zinc-800 rounded text-sm font-semibold flex items-center gap-2"
+                style={{ WebkitAppRegion: 'no-drag' }}
+                onClick={() => eventBus.emit('navigate', { path: '/latest-episodes' })}
+              >
+                <Icon icon="majesticons:megaphone-line" width="20" height="20" className="pointer-events-none text-zinc-500" />
+                Últimos Episodios
+              </button>
+            </NewBadge>
           </div>
 
           {/* Window Controls and Discord User */}

@@ -108,7 +108,7 @@ const LatestEpisodes = React.memo(({
   };
 
   return (
-    <div className="relative flex flex-col py-6">
+    <div className="relative flex flex-col items-center py-6">
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
@@ -118,7 +118,13 @@ const LatestEpisodes = React.memo(({
         }}
       />
       {sectionTitle && (
-        <h2 className="relative text-2xl font-bold mb-6 px-8 text-center">{sectionTitle}</h2>
+        <button 
+          onClick={() => eventBus.emit('navigate', { path: '/latest-episodes' })} 
+          className="flex flex-row items-center gap-2 mb-6 transition-transform duration-300 hover:-translate-y-1"
+        >
+          <Icon icon="majesticons:megaphone-line" width="28" height="28" className="pointer-events-none text-zinc-500" />
+          <h2 className="relative text-2xl font-bold text-center">{sectionTitle}</h2>
+        </button>
       )}
 
       <div className="relative mx-auto w-full max-w-[90%]">
