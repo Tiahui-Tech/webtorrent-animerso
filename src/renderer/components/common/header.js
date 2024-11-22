@@ -60,19 +60,11 @@ const Header = ({ state }) => {
   const debouncedEmitSearch = useCallback(
     debounce((term) => {
       if (currentPath !== '/popular-anime') {
-        // Listen for navigation completion before emitting search
-        const handleRouteChange = (path) => {
-          if (path === '/popular-anime') {
-            eventBus.emit('searchTermChanged', term);
-            eventBus.off('routeChanged', handleRouteChange);
-          }
-        };
-
-        eventBus.on('routeChanged', handleRouteChange);
         eventBus.emit('navigate', {
           path: '/popular-anime',
           state: { searchTerm: term }
         });
+
       } else {
         // If already on popular-anime, emit search directly
         eventBus.emit('searchTermChanged', term);

@@ -4,9 +4,11 @@ const { usePostHog } = require('posthog-js/react');
 const eventBus = require('../lib/event-bus');
 
 const PLAYER_PATH = '/player';
+const POPULAR_ANIME_PATH = '/popular-anime';
 const HOME_PATH = '/';
 const defaultHeaderTitle = "Beta cerrada";
 const isPlayerRoute = (path) => path?.includes(PLAYER_PATH);
+const isPopularAnimeRoute = (path) => path?.includes(POPULAR_ANIME_PATH);
 
 const useHeaderNavigation = () => {
     const posthog = usePostHog();
@@ -25,6 +27,8 @@ const useHeaderNavigation = () => {
         const currentPath = location.pathname;
         const isCurrentPlayer = isPlayerRoute(currentPath);
         const wasPreviousPlayer = isPlayerRoute(historyRef.current.current);
+        const isCurrentPopularAnime = isPopularAnimeRoute(currentPath);
+        const wasPreviousPopularAnime = isPopularAnimeRoute(historyRef.current.current);
 
         // Send special event when leaving player route
         if (wasPreviousPlayer && !isCurrentPlayer) {
@@ -32,6 +36,11 @@ const useHeaderNavigation = () => {
                 from: '/player',
                 to: currentPath
             });
+        }
+
+        // Send special event when leaving popular-anime route
+        if (wasPreviousPopularAnime && !isCurrentPopularAnime) {
+            setSearchTerm(null)
         }
 
         // Only update history if:

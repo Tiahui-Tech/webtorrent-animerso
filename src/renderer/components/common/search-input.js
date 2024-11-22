@@ -2,43 +2,46 @@ const React = require('react');
 const { useState, useEffect, useRef } = React;
 const { Icon } = require('@iconify/react');
 const { motion, AnimatePresence } = require('framer-motion');
+const eventBus = require('../../lib/event-bus');
 
 const SearchInput = ({ searchTerm, setSearchTerm }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const inputRef = useRef(null);
     const containerRef = useRef(null);
 
+    // Handle input focus when expanded
     useEffect(() => {
         if (isExpanded) {
             inputRef.current?.focus();
         }
     }, [isExpanded]);
 
+    // Handle click outside
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (containerRef.current && !containerRef.current.contains(event.target)) {
-                setIsExpanded(false);
-            }
-        };
-
-        const handleBlur = (event) => {
-            setTimeout(() => {
-                if (containerRef.current && !containerRef.current.contains(document.activeElement)) {
+            if (!containerRef.current?.contains(event.target)) {
+                // Only close if empty
+                if (!searchTerm) {
                     setIsExpanded(false);
                 }
-            }, 0);
+            }
         };
 
         if (isExpanded) {
             document.addEventListener('mousedown', handleClickOutside);
-            document.addEventListener('focusin', handleBlur);
         }
 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
-            document.removeEventListener('focusin', handleBlur);
         };
-    }, [isExpanded]);
+    }, [isExpanded, searchTerm]);
+
+    // Close search input when term is empty
+    useEffect(() => {
+        if (searchTerm === null) {
+            setIsExpanded(false);
+        }
+    }, [searchTerm]);
 
     const handleSearch = (event) => {
         setSearchTerm(event.target.value);
