@@ -5,6 +5,7 @@ const { useEffect, useState, useRef, useCallback } = React;
 const { useLocation } = require('react-router-dom');
 const { AnimatePresence, motion } = require('framer-motion');
 const { Icon } = require('@iconify/react');
+const { Slider } = require('@nextui-org/react');
 
 const remote = require('@electron/remote')
 const BitField = require('bitfield').default;
@@ -17,12 +18,12 @@ const TorrentSummary = require('../lib/torrent-summary');
 const Playlist = require('../lib/playlist');
 const { dispatch, dispatcher } = require('../lib/dispatcher');
 const config = require('../../config');
-const { calculateEta } = require('../lib/time');
 const eventBus = require('../lib/event-bus');
 const { sendNotification } = require('../lib/errors');
 
 const Spinner = require('../components/common/spinner');
 const VideoSpinner = require('../components/common/video-spinner');
+const SubtitleSelector = require('../components/common/video/subtitle-selector');
 
 const anitomyscript = require('anitomyscript');
 
@@ -626,28 +627,6 @@ function renderOverlay(state) {
   );
 }
 
-/**
- * Render track or disk number string
- * @param common metadata.common part
- * @param key should be either 'track' or 'disk'
- * @return track or disk number metadata as JSX block
- */
-function renderTrack(common, key) {
-  // Audio metadata: track-number
-  if (common[key] && common[key].no) {
-    let str = `${common[key].no}`;
-    if (common[key].of) {
-      str += ` of ${common[key].of}`;
-    }
-    const style = { textTransform: 'capitalize' };
-    return (
-      <div className={`audio-${key}`}>
-        <label style={style}>{key}</label> {str}
-      </div>
-    );
-  }
-}
-
 function renderLoadingSpinner(state) {
   if (state.playing.isPaused) return;
   const isProbablyStalled =
@@ -670,168 +649,6 @@ function renderLoadingSpinner(state) {
       downloadSpeed={prog.downloadSpeed}
       uploadSpeed={prog.uploadSpeed}
     />
-  );
-}
-
-function renderCastScreen(state) {
-  let castIcon, castType, isCast;
-  if (state.playing.location.startsWith('chromecast')) {
-    castIcon = 'cast_connected';
-    castType = 'Chromecast';
-    isCast = true;
-  } else if (state.playing.location.startsWith('airplay')) {
-    castIcon = 'airplay';
-    castType = 'AirPlay';
-    isCast = true;
-  } else if (state.playing.location.startsWith('dlna')) {
-    castIcon = 'tv';
-    castType = 'DLNA';
-    isCast = true;
-  } else if (state.playing.location === 'external') {
-    castIcon = 'tv';
-    castType = state.getExternalPlayerName();
-    isCast = false;
-  } else if (state.playing.location === 'error') {
-    castIcon = 'error_outline';
-    castType = 'Unable to Play';
-    isCast = false;
-  }
-
-  const isStarting = state.playing.location.endsWith('-pending');
-  const castName = state.playing.castName;
-  const fileName = state.getPlayingFileSummary().name || '';
-  let castStatus;
-  if (isCast && isStarting) castStatus = 'Connecting to ' + castName + '...';
-  else if (isCast && !isStarting) castStatus = 'Connected to ' + castName;
-  else castStatus = '';
-
-  const prog = state.getPlayingTorrentSummary()?.progress || {};
-
-  // Show a nice title image, if possible
-  const style = {
-    backgroundImage: cssBackgroundImagePoster(state)
-  };
-
-  function renderEta(total, downloaded) {
-    const missing = (total || 0) - (downloaded || 0);
-    const downloadSpeed = prog.downloadSpeed || 0;
-    if (downloadSpeed === 0 || missing === 0) return;
-
-    const etaStr = calculateEta(missing, downloadSpeed);
-
-    return <span>{etaStr}</span>;
-  }
-
-  function renderDownloadProgress() {
-    if (!prog.files) return;
-
-    const fileProg = prog.files[state.playing.fileIndex];
-    const fileProgress = fileProg.numPiecesPresent / fileProg.numPieces;
-    const fileLength = state.getPlayingFileSummary().length;
-    const fileDownloaded = fileProgress * fileLength;
-
-    const progress = Math.round(100 * fileProgress);
-    const total = prettyBytes(fileLength);
-    const completed = prettyBytes(fileDownloaded);
-
-    const downloadSpeed = prettyBytes(prog.downloadSpeed || 0);
-    const uploadSpeed = prettyBytes(prog.uploadSpeed || 0);
-
-    let sizes;
-    if (fileProgress < 1) {
-      sizes = (
-        <span>
-          {' '}
-          | {completed} / {total}
-        </span>
-      );
-    } else {
-      sizes = <span> | {completed}</span>;
-    }
-
-    return (
-      <div key="download-progress">
-        <span className="progress">
-          {progress}% downloaded {sizes}
-        </span>
-        <br />
-        <span>
-          ↓ {downloadSpeed}/s ↑ {uploadSpeed}/s | {prog.numPeers || 0} peer(s)
-        </span>
-        <br />
-        {renderEta(fileLength, fileDownloaded)}
-      </div>
-    );
-  }
-
-  return (
-    <div key="cast" className="letterbox" style={style}>
-      <div className="cast-screen">
-        <i className="icon">{castIcon}</i>
-        <div key="type" className="cast-type">
-          {castType}
-        </div>
-        <div key="status" className="cast-status">
-          {castStatus}
-        </div>
-        <div key="name" className="name">
-          {fileName}
-        </div>
-        {renderDownloadProgress()}
-      </div>
-    </div>
-  );
-}
-
-function renderSubtitleOptions(state, currentSubtitles) {
-  const subtitlesData = state.playing.subtitles;
-  if (!currentSubtitles.tracks.length || !subtitlesData.showMenu) return;
-
-  const items = currentSubtitles.tracks.map((track, ix) => {
-    const isSelected = subtitlesData.selectedIndex === ix;
-    return (
-      <li key={ix} onClick={dispatcher('selectSubtitle', ix)}>
-        <i className="icon">
-          {'radio_button_' + (isSelected ? 'checked' : 'unchecked')}
-        </i>
-        {track.label}
-      </li>
-    );
-  });
-
-  const noneSelected = subtitlesData.selectedIndex === -1;
-  const noneClass = 'radio_button_' + (noneSelected ? 'checked' : 'unchecked');
-  return (
-    <ul key="subtitle-options" className="options-list">
-      {items}
-      <li onClick={dispatcher('selectSubtitle', -1)}>
-        <i className="icon">{noneClass}</i>
-        Sin subtítulos
-      </li>
-    </ul>
-  );
-}
-
-function renderAudioTrackOptions(state) {
-  const audioTracks = state.playing.audioTracks;
-  if (!audioTracks.tracks.length || !audioTracks.showMenu) return;
-
-  const items = audioTracks.tracks.map((track, ix) => {
-    const isSelected = state.playing.audioTracks.selectedIndex === ix;
-    return (
-      <li key={ix} onClick={dispatcher('selectAudioTrack', ix)}>
-        <i className="icon">
-          {'radio_button_' + (isSelected ? 'checked' : 'unchecked')}
-        </i>
-        {track.label}
-      </li>
-    );
-  });
-
-  return (
-    <ul key="audio-track-options" className="options-list">
-      {items}
-    </ul>
   );
 }
 
@@ -911,15 +728,19 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
             height="24"
           />
         </button>
-        <input
-          className="w-24 mx-2 h-1 bg-white/25 rounded-full appearance-none cursor-pointer
-                     transition-all duration-200 hover:bg-white/40"
-          type="range"
-          min="0"
-          max="1" 
-          step="0.05"
+        <Slider
+          aria-label="Player volume"
+          color="foreground"
+          hideValue={true}
+          minValue={0}
+          maxValue={1}
+          step={0.05}
           value={state.playing.volume}
           onChange={handleVolumeScrub}
+          className="max-w-md w-24"
+          style={{
+            zIndex: 99999
+          }}
         />
       </div>
 
@@ -942,19 +763,6 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
           >
             <Icon
               icon="mingcute:subtitle-fill"
-              className="pointer-events-none"
-              width="24"
-              height="24"
-            />
-          </button>
-
-          <button
-            key="audio-tracks"
-            className={`p-2 text-white/90 transition-all duration-200 ${multiAudioClass}`}
-            onClick={handleAudioTracks}
-          >
-            <Icon
-              icon="mingcute:music-3-fill"
               className="pointer-events-none"
               width="24"
               height="24"
@@ -986,6 +794,10 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
     if (volume < 0.3) return 'fluent:speaker-1-24-filled';
     if (volume < 0.6) return 'fluent:speaker-2-24-filled';
     return 'fluent:speaker-2-24-filled';
+  }
+
+  function convertToPercentage(value) {
+    return Math.floor(value * 100);
   }
 
   const emptyImage = new window.Image(0, 0);
@@ -1105,8 +917,8 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
         {/* Progress bar background and fill */}
         <div className="relative w-full h-full">
           <div className="absolute w-full h-full bg-white/20" />
-          <div 
-            className="absolute h-full bg-white/60" 
+          <div
+            className="absolute h-full bg-white/60"
             style={{ width: `${positionPercent}%` }}
           />
           {elements[1]}
@@ -1117,8 +929,7 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
       <div className="relative flex items-center w-full h-16 px-2">
         {elements.slice(2)}
       </div>
-      {renderSubtitleOptions(state, currentSubtitles)}
-      {renderAudioTrackOptions(state)}
+      <SubtitleSelector state={state} currentSubtitles={currentSubtitles} />
     </div>
   );
 }
@@ -1258,7 +1069,6 @@ function cssBackgroundImageDarkGradient() {
     'rgba(0,0,0,0.4) 0%, rgba(0,0,0,1) 100%)'
   );
 }
-
 function formatTime(time, total) {
   if (typeof time !== 'number' || Number.isNaN(time)) {
     return '0:00';
@@ -1275,3 +1085,4 @@ function formatTime(time, total) {
 
   return (totalHours > 0 ? hours + ':' : '') + minutes + ':' + seconds;
 }
+
