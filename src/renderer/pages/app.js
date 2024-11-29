@@ -82,7 +82,7 @@ function AppContent({ initialState, onUpdate }) {
     eventBus.on('stateUpdate', stateUpdateHandler);
 
     const navigationHandler = ({ path, state }) => {
-      navigate(path, { state, replace: true });
+      navigate(path, { state });
       window.scrollTo(0, 0);
     };
     eventBus.on('navigate', navigationHandler);

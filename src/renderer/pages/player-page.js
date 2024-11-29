@@ -5,7 +5,6 @@ const { useEffect, useState, useRef, useCallback } = React;
 const { useLocation } = require('react-router-dom');
 const { AnimatePresence, motion } = require('framer-motion');
 const { Icon } = require('@iconify/react');
-const { Slider } = require('@nextui-org/react');
 
 const remote = require('@electron/remote')
 const BitField = require('bitfield').default;
@@ -728,19 +727,15 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
             height="24"
           />
         </button>
-        <Slider
-          aria-label="Player volume"
-          color="foreground"
-          hideValue={true}
-          minValue={0}
-          maxValue={1}
-          step={0.05}
+        <input
+          className="w-24 mx-2 h-1 bg-white/25 rounded-full appearance-none cursor-pointer
+                     transition-all duration-200 hover:bg-white/40"
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
           value={state.playing.volume}
           onChange={handleVolumeScrub}
-          className="max-w-md w-24"
-          style={{
-            zIndex: 99999
-          }}
         />
       </div>
 

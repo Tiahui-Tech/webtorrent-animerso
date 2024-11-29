@@ -25,7 +25,7 @@ module.exports = class PlaybackController {
 
   navigateBackAndError(cb) {
     eventBus.emit('navigate', {
-      path: -1
+      path: '/'
     })
     return cb(new UnplayableFileError());
   }
