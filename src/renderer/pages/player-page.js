@@ -4,6 +4,7 @@ const React = require('react');
 const { useEffect, useState, useRef, useCallback } = React;
 const { useLocation } = require('react-router-dom');
 const { AnimatePresence, motion } = require('framer-motion');
+const { Icon } = require('@iconify/react');
 
 const remote = require('@electron/remote')
 const BitField = require('bitfield').default;
@@ -16,12 +17,12 @@ const TorrentSummary = require('../lib/torrent-summary');
 const Playlist = require('../lib/playlist');
 const { dispatch, dispatcher } = require('../lib/dispatcher');
 const config = require('../../config');
-const { calculateEta } = require('../lib/time');
 const eventBus = require('../lib/event-bus');
 const { sendNotification } = require('../lib/errors');
 
 const Spinner = require('../components/common/spinner');
 const VideoSpinner = require('../components/common/video-spinner');
+const SubtitleSelector = require('../components/common/video/subtitle-selector');
 
 const anitomyscript = require('anitomyscript');
 
@@ -113,7 +114,7 @@ function Player({ state, currentTorrent }) {
         details: animeName,
         state: episodeNumber ? `Episodio ${episodeNumber}` : '',
         assets: {
-          small_image: isPaused ? 'pause' : 'play', 
+          small_image: isPaused ? 'pause' : 'play',
           small_text: isPaused ? 'Pausado' : 'Reproduciendo',
           large_image: rpcFrame,
         },
@@ -123,7 +124,7 @@ function Player({ state, currentTorrent }) {
     const updateHeaderTitle = (animeInfo) => {
       const { animeName, episodeNumber } = animeInfo;
       let title = animeName.replace(' - Movie', '');
-      
+
       if (episodeNumber) {
         title = `${title} - E${episodeNumber}`;
       }
@@ -136,11 +137,11 @@ function Player({ state, currentTorrent }) {
       updateHeaderTitle(animeInfo);
 
       if (currentTorrent && isTorrentReady && rpcFrame) {
-        console.log('rpcAndTitle: Updating Discord RPC with state:', { 
-          currentTorrent, 
-          isPaused: state.playing.isPaused, 
-          isTorrentReady, 
-          rpcFrame 
+        console.log('rpcAndTitle: Updating Discord RPC with state:', {
+          currentTorrent,
+          isPaused: state.playing.isPaused,
+          isTorrentReady,
+          rpcFrame
         });
         updateDiscordRPC(animeInfo);
       } else {
@@ -302,8 +303,8 @@ function Player({ state, currentTorrent }) {
       if (needsMoreChecks) {
         // Dynamic timeout based on attempt number
         const timeout = attempts <= 5 ? 10000 : // First 5 attempts: 10 seconds
-                       attempts <= 10 ? 30000 : // Attempts 6-10: 30 seconds 
-                       60000; // Attempts 11-16: 60 seconds
+          attempts <= 10 ? 30000 : // Attempts 6-10: 30 seconds 
+            60000; // Attempts 11-16: 60 seconds
 
         const timeoutId = setTimeout(checkForSubtitles, timeout);
         subtitleCheckRef.current.timeoutId = timeoutId;
@@ -625,28 +626,6 @@ function renderOverlay(state) {
   );
 }
 
-/**
- * Render track or disk number string
- * @param common metadata.common part
- * @param key should be either 'track' or 'disk'
- * @return track or disk number metadata as JSX block
- */
-function renderTrack(common, key) {
-  // Audio metadata: track-number
-  if (common[key] && common[key].no) {
-    let str = `${common[key].no}`;
-    if (common[key].of) {
-      str += ` of ${common[key].of}`;
-    }
-    const style = { textTransform: 'capitalize' };
-    return (
-      <div className={`audio-${key}`}>
-        <label style={style}>{key}</label> {str}
-      </div>
-    );
-  }
-}
-
 function renderLoadingSpinner(state) {
   if (state.playing.isPaused) return;
   const isProbablyStalled =
@@ -672,168 +651,6 @@ function renderLoadingSpinner(state) {
   );
 }
 
-function renderCastScreen(state) {
-  let castIcon, castType, isCast;
-  if (state.playing.location.startsWith('chromecast')) {
-    castIcon = 'cast_connected';
-    castType = 'Chromecast';
-    isCast = true;
-  } else if (state.playing.location.startsWith('airplay')) {
-    castIcon = 'airplay';
-    castType = 'AirPlay';
-    isCast = true;
-  } else if (state.playing.location.startsWith('dlna')) {
-    castIcon = 'tv';
-    castType = 'DLNA';
-    isCast = true;
-  } else if (state.playing.location === 'external') {
-    castIcon = 'tv';
-    castType = state.getExternalPlayerName();
-    isCast = false;
-  } else if (state.playing.location === 'error') {
-    castIcon = 'error_outline';
-    castType = 'Unable to Play';
-    isCast = false;
-  }
-
-  const isStarting = state.playing.location.endsWith('-pending');
-  const castName = state.playing.castName;
-  const fileName = state.getPlayingFileSummary().name || '';
-  let castStatus;
-  if (isCast && isStarting) castStatus = 'Connecting to ' + castName + '...';
-  else if (isCast && !isStarting) castStatus = 'Connected to ' + castName;
-  else castStatus = '';
-
-  const prog = state.getPlayingTorrentSummary()?.progress || {};
-
-  // Show a nice title image, if possible
-  const style = {
-    backgroundImage: cssBackgroundImagePoster(state)
-  };
-
-  function renderEta(total, downloaded) {
-    const missing = (total || 0) - (downloaded || 0);
-    const downloadSpeed = prog.downloadSpeed || 0;
-    if (downloadSpeed === 0 || missing === 0) return;
-
-    const etaStr = calculateEta(missing, downloadSpeed);
-
-    return <span>{etaStr}</span>;
-  }
-
-  function renderDownloadProgress() {
-    if (!prog.files) return;
-
-    const fileProg = prog.files[state.playing.fileIndex];
-    const fileProgress = fileProg.numPiecesPresent / fileProg.numPieces;
-    const fileLength = state.getPlayingFileSummary().length;
-    const fileDownloaded = fileProgress * fileLength;
-
-    const progress = Math.round(100 * fileProgress);
-    const total = prettyBytes(fileLength);
-    const completed = prettyBytes(fileDownloaded);
-
-    const downloadSpeed = prettyBytes(prog.downloadSpeed || 0);
-    const uploadSpeed = prettyBytes(prog.uploadSpeed || 0);
-
-    let sizes;
-    if (fileProgress < 1) {
-      sizes = (
-        <span>
-          {' '}
-          | {completed} / {total}
-        </span>
-      );
-    } else {
-      sizes = <span> | {completed}</span>;
-    }
-
-    return (
-      <div key="download-progress">
-        <span className="progress">
-          {progress}% downloaded {sizes}
-        </span>
-        <br />
-        <span>
-          ↓ {downloadSpeed}/s ↑ {uploadSpeed}/s | {prog.numPeers || 0} peer(s)
-        </span>
-        <br />
-        {renderEta(fileLength, fileDownloaded)}
-      </div>
-    );
-  }
-
-  return (
-    <div key="cast" className="letterbox" style={style}>
-      <div className="cast-screen">
-        <i className="icon">{castIcon}</i>
-        <div key="type" className="cast-type">
-          {castType}
-        </div>
-        <div key="status" className="cast-status">
-          {castStatus}
-        </div>
-        <div key="name" className="name">
-          {fileName}
-        </div>
-        {renderDownloadProgress()}
-      </div>
-    </div>
-  );
-}
-
-function renderSubtitleOptions(state, currentSubtitles) {
-  const subtitlesData = state.playing.subtitles;
-  if (!currentSubtitles.tracks.length || !subtitlesData.showMenu) return;
-
-  const items = currentSubtitles.tracks.map((track, ix) => {
-    const isSelected = subtitlesData.selectedIndex === ix;
-    return (
-      <li key={ix} onClick={dispatcher('selectSubtitle', ix)}>
-        <i className="icon">
-          {'radio_button_' + (isSelected ? 'checked' : 'unchecked')}
-        </i>
-        {track.label}
-      </li>
-    );
-  });
-
-  const noneSelected = subtitlesData.selectedIndex === -1;
-  const noneClass = 'radio_button_' + (noneSelected ? 'checked' : 'unchecked');
-  return (
-    <ul key="subtitle-options" className="options-list">
-      {items}
-      <li onClick={dispatcher('selectSubtitle', -1)}>
-        <i className="icon">{noneClass}</i>
-        Sin subtítulos
-      </li>
-    </ul>
-  );
-}
-
-function renderAudioTrackOptions(state) {
-  const audioTracks = state.playing.audioTracks;
-  if (!audioTracks.tracks.length || !audioTracks.showMenu) return;
-
-  const items = audioTracks.tracks.map((track, ix) => {
-    const isSelected = state.playing.audioTracks.selectedIndex === ix;
-    return (
-      <li key={ix} onClick={dispatcher('selectAudioTrack', ix)}>
-        <i className="icon">
-          {'radio_button_' + (isSelected ? 'checked' : 'unchecked')}
-        </i>
-        {track.label}
-      </li>
-    );
-  });
-
-  return (
-    <ul key="audio-track-options" className="options-list">
-      {items}
-    </ul>
-  );
-}
-
 function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubtitles) {
   const controlsStyle = {
     zIndex: 9000,
@@ -841,31 +658,35 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
     transition: 'opacity 0.3s ease-in-out',
     pointerEvents: isMouseMoving ? 'auto' : 'none',
   };
-  const positionPercent =
-    (100 * state.playing.currentTime) / state.playing.duration;
-  const playbackCursorStyle = { left: 'calc(' + positionPercent + '% - 3px)' };
-  const captionsClass =
-    currentSubtitles.tracks.length === 0
-      ? 'disabled'
-      : state.playing.subtitles.selectedIndex >= 0
-        ? 'active'
-        : '';
-  const multiAudioClass =
-    state.playing.audioTracks.tracks.length > 1 ? 'active' : 'disabled';
+
+  const positionPercent = (100 * state.playing.currentTime) / state.playing.duration;
+  const playbackCursorStyle = { left: `calc(${positionPercent}% - 3px)` };
+
+  const captionsClass = currentSubtitles.tracks.length === 0
+    ? 'opacity-30 cursor-not-allowed'  // disabled
+    : state.playing.subtitles.selectedIndex >= 0
+      ? 'text-blue-400' // active
+      : 'hover:text-white/100';
+
+  const multiAudioClass = state.playing.audioTracks.tracks.length > 1
+    ? 'hover:text-white/100'
+    : 'opacity-30 cursor-not-allowed';
 
   const elements = [
     renderPreview(state),
 
-    <div key="playback-bar" className="playback-bar">
+    // Playback bar
+    <div key="playback-bar" className="absolute top-0 left-0 right-0 h-1 group">
       {renderLoadingBar(state)}
       <div
         key="cursor"
-        className="playback-cursor"
+        className="absolute w-2 h-2 group-hover:-top-1.5 -top-0.5 bg-white rounded-full shadow-lg transform -translate-x-1/2
+                   group-hover:w-4 group-hover:h-4 transition-all duration-200"
         style={playbackCursorStyle}
       />
       <div
         key="scrub-bar"
-        className="scrub-bar"
+        className="absolute w-full h-8 -top-3 cursor-pointer"
         draggable="true"
         onMouseMove={handleScrubPreview}
         onMouseOut={clearPreview}
@@ -875,164 +696,103 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
       />
     </div>,
 
-    <i
-      key="play"
-      className="icon play-pause float-left"
-      onClick={() => dispatch('playPause')}
-      role="button"
-      aria-label={state.playing.isPaused ? 'Play' : 'Pause'}
-    >
-      {state.playing.isPaused ? 'play_arrow' : 'pause'}
-    </i>,
+    // Left controls group
+    <div className="flex items-center space-x-2 ml-4">
+      <button
+        key="play"
+        className="p-2 text-white/90 hover:text-white/100 transition-all duration-200 
+                   hover:scale-110 focus:outline-none"
+        onClick={() => dispatch('playPause')}
+        aria-label={state.playing.isPaused ? 'Play' : 'Pause'}
+      >
+        <Icon
+          icon={state.playing.isPaused ? 'fluent:play-48-filled' : 'fluent:pause-48-filled'}
+          className="pointer-events-none"
+          width="32"
+          height="32"
+        />
+      </button>
 
-    <i
-      key="fullscreen"
-      className="icon fullscreen float-right"
-      onClick={handleFullScreen}
-      role="button"
-      aria-label={
-        state.window.isVideoFullScreen ? 'Exit full screen' : 'Enter full screen'
-      }
-    >
-      {state.window.isVideoFullScreen ? 'fullscreen_exit' : 'fullscreen'}
-    </i>
+      {/* Volume control */}
+      <div key="volume" className="flex items-center">
+        <button
+          className="p-2 text-white/90 hover:text-white/100 transition-colors"
+          onClick={handleVolumeMute}
+          aria-label="Mute"
+        >
+          <Icon
+            icon={getVolumeIcon(state.playing.volume)}
+            className="pointer-events-none"
+            width="24"
+            height="24"
+          />
+        </button>
+        <input
+          className="w-24 mx-2 h-1 bg-white/25 rounded-full appearance-none cursor-pointer
+                     transition-all duration-200 hover:bg-white/40"
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
+          value={state.playing.volume}
+          onChange={handleVolumeScrub}
+        />
+      </div>
+
+      {/* Time display */}
+      <span key="time" className="text-sm text-white/80 font-medium tabular-nums select-none">
+        {formatTime(state.playing.currentTime, state.playing.duration)} /
+        {formatTime(state.playing.duration, state.playing.duration)}
+      </span>
+    </div>,
+
+    // Right controls group
+    <div className="flex items-center space-x-2 ml-auto mr-4">
+      {state.playing.type === 'video' && (
+        <>
+          <button
+            key="subtitles"
+            className={`p-2 text-white/90 transition-all duration-200 ${captionsClass}`}
+            onClick={handleSubtitles}
+            aria-label="Closed captions"
+          >
+            <Icon
+              icon="mingcute:subtitle-fill"
+              className="pointer-events-none"
+              width="24"
+              height="24"
+            />
+          </button>
+        </>
+      )}
+
+      <button
+        key="fullscreen"
+        className="p-2 text-white/90 hover:text-white/100 transition-all duration-200 
+                   hover:scale-110 focus:outline-none"
+        onClick={handleFullScreen}
+        aria-label={state.window.isVideoFullScreen ? 'Exit full screen' : 'Enter full screen'}
+      >
+        <Icon
+          icon={state.window.isVideoFullScreen ? 'mingcute:fullscreen-exit-fill' : 'mingcute:fullscreen-fill'}
+          className="pointer-events-none"
+          width="24"
+          height="24"
+        />
+      </button>
+    </div>
   ];
 
-  if (state.playing.type === 'video') {
-    // Show closed captions icon
-    elements.push(
-      <i
-        key="subtitles"
-        className={'icon closed-caption float-right ' + captionsClass}
-        onClick={handleSubtitles}
-        role="button"
-        aria-label="Closed captions"
-      >
-        closed_caption
-      </i>,
-      <i
-        key="audio-tracks"
-        className={'icon multi-audio float-right ' + multiAudioClass}
-        onClick={handleAudioTracks}
-      >
-        library_music
-      </i>
-    );
+  // Helper function for volume icon
+  function getVolumeIcon(volume) {
+    if (volume === 0) return 'fluent:speaker-mute-24-filled';
+    if (volume < 0.3) return 'fluent:speaker-1-24-filled';
+    if (volume < 0.6) return 'fluent:speaker-2-24-filled';
+    return 'fluent:speaker-2-24-filled';
   }
 
-  // If we've detected a Chromecast or AppleTV, the user can play video there
-  const castTypes = ['chromecast', 'airplay', 'dlna'];
-  const isCastingAnywhere = castTypes.some((castType) =>
-    state.playing.location.startsWith(castType)
-  );
-
-  // Add the cast buttons. Icons for each cast type, connected/disconnected:
-  const buttonIcons = {
-    chromecast: { true: 'cast_connected', false: 'cast' },
-    airplay: { true: 'airplay', false: 'airplay' },
-    dlna: { true: 'tv', false: 'tv' }
-  };
-  castTypes.forEach((castType) => {
-    // Do we show this button (eg. the Chromecast button) at all?
-    const isCasting = state.playing.location.startsWith(castType);
-    const player = state.devices[castType];
-    if ((!player || player.getDevices().length === 0) && !isCasting) return;
-
-    // Show the button. Three options for eg the Chromecast button:
-    let buttonClass, buttonHandler;
-    if (isCasting) {
-      // Option 1: we are currently connected to Chromecast. Button stops the cast.
-      buttonClass = 'active';
-      buttonHandler = dispatcher('stopCasting');
-    } else if (isCastingAnywhere) {
-      // Option 2: we are currently connected somewhere else. Button disabled.
-      buttonClass = 'disabled';
-      buttonHandler = undefined;
-    } else {
-      // Option 3: we are not connected anywhere. Button opens Chromecast menu.
-      buttonClass = '';
-      buttonHandler = dispatcher('toggleCastMenu', castType);
-    }
-    const buttonIcon = buttonIcons[castType][isCasting];
-
-    elements.push(
-      <i
-        key={castType}
-        className={'icon device float-right ' + buttonClass}
-        onClick={buttonHandler}
-      >
-        {buttonIcon}
-      </i>
-    );
-  });
-
-  // Render volume slider
-  const volume = state.playing.volume;
-  const volumeIcon =
-    'volume_' +
-    (volume === 0
-      ? 'off'
-      : volume < 0.3
-        ? 'mute'
-        : volume < 0.6
-          ? 'down'
-          : 'up');
-  const volumeStyle = {
-    background:
-      '-webkit-gradient(linear, left top, right top, ' +
-      'color-stop(' +
-      volume * 100 +
-      '%, #eee), ' +
-      'color-stop(' +
-      volume * 100 +
-      '%, #727272))'
-  };
-
-  elements.push(
-    <div key="volume" className="volume float-left">
-      <i
-        className="icon volume-icon float-left"
-        onMouseDown={handleVolumeMute}
-        role="button"
-        aria-label="Mute"
-      >
-        {volumeIcon}
-      </i>
-      <input
-        className="volume-slider float-right"
-        type="range"
-        min="0"
-        max="1"
-        step="0.05"
-        value={volume}
-        onChange={handleVolumeScrub}
-        style={volumeStyle}
-      />
-    </div>
-  );
-
-  // Show video playback progress
-  const currentTimeStr = formatTime(
-    state.playing.currentTime,
-    state.playing.duration
-  );
-  const durationStr = formatTime(
-    state.playing.duration,
-    state.playing.duration
-  );
-  elements.push(
-    <span key="time" className="time float-left">
-      {currentTimeStr} / {durationStr}
-    </span>
-  );
-
-  // Render playback rate
-  if (state.playing.playbackRate !== 1) {
-    elements.push(
-      <span key="rate" className="rate float-left">
-        {state.playing.playbackRate}x
-      </span>
-    );
+  function convertToPercentage(value) {
+    return Math.floor(value * 100);
   }
 
   const emptyImage = new window.Image(0, 0);
@@ -1143,13 +903,28 @@ function renderPlayerControls(state, isMouseMoving, handleMouseMove, currentSubt
   return (
     <div
       key="controls"
-      className="controls"
+      className="fixed bottom-0 w-full bg-gradient-to-t from-black/95 via-black/75 to-transparent flex flex-col"
       style={controlsStyle}
       onMouseMove={handleMouseMove}
     >
-      {elements}
-      {renderSubtitleOptions(state, currentSubtitles)}
-      {renderAudioTrackOptions(state)}
+      {/* Progress bar container */}
+      <div className="w-full h-1 bg-white/5 hover:h-1.5 transition-all duration-200 mt-10">
+        {/* Progress bar background and fill */}
+        <div className="relative w-full h-full">
+          <div className="absolute w-full h-full bg-white/20" />
+          <div
+            className="absolute h-full bg-white/60"
+            style={{ width: `${positionPercent}%` }}
+          />
+          {elements[1]}
+        </div>
+      </div>
+
+      {/* Controls container */}
+      <div className="relative flex items-center w-full h-16 px-2">
+        {elements.slice(2)}
+      </div>
+      <SubtitleSelector state={state} currentSubtitles={currentSubtitles} />
     </div>
   );
 }
@@ -1289,7 +1064,6 @@ function cssBackgroundImageDarkGradient() {
     'rgba(0,0,0,0.4) 0%, rgba(0,0,0,1) 100%)'
   );
 }
-
 function formatTime(time, total) {
   if (typeof time !== 'number' || Number.isNaN(time)) {
     return '0:00';
@@ -1306,3 +1080,4 @@ function formatTime(time, total) {
 
   return (totalHours > 0 ? hours + ':' : '') + minutes + ':' + seconds;
 }
+

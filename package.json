@@ -1,7 +1,7 @@
 {
   "name": "animeton",
   "description": "Animeton, the streaming torrent client. For Mac, Windows, and Linux.",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "author": {
     "name": "Tiahui Tech",
     "email": "contact@tiahui.tech",
@@ -31,7 +31,7 @@
     "@iconify/react": "^5.0.2",
     "@mui/icons-material": "^5.15.21",
     "@mui/material": "^5.15.21",
-    "@nextui-org/react": "^2.4.6",
+    "@nextui-org/react": "^2.4.8",
     "@nextui-org/system": "^2.2.5",
     "@nextui-org/theme": "^2.2.9",
     "adm-zip": "^0.5.16",

@@ -23,6 +23,13 @@ module.exports = class PlaybackController {
     this.config = config
   }
 
+  navigateBackAndError(cb) {
+    eventBus.emit('navigate', {
+      path: '/'
+    })
+    return cb(new UnplayableFileError());
+  }
+
   // Play a file in a torrent.
   // * Start torrenting, if necessary
   // * Stream, if not already fully downloaded
@@ -277,7 +284,7 @@ module.exports = class PlaybackController {
     const torrentSummary = TorrentSummary.getByKey(state, infoHash)
 
     if (!torrentSummary || !torrentSummary.infoHash) {
-      return cb(new UnplayableFileError());
+      return this.navigateBackAndError(cb)
     }
 
     state.playing.infoHash = infoHash;
@@ -325,12 +332,12 @@ module.exports = class PlaybackController {
     const fileSummary = torrentSummary?.files?.at(index)
 
     if (!fileSummary) {
-      return cb(new UnplayableFileError())
+      return this.navigateBackAndError(cb)
     }
 
     if (!TorrentPlayer.isPlayable(fileSummary)) {
       torrentSummary.mostRecentFileIndex = undefined
-      return cb(new UnplayableFileError())
+      return this.navigateBackAndError(cb)
     }
 
     torrentSummary.mostRecentFileIndex = index
